@@ -1,4 +1,4 @@
-.PHONY: help up down logs test lint demo openapi seed clean
+.PHONY: help up down logs test lint demo openapi seed clean data train
 
 help:
 	@echo "AI-Driven WAF & Analytics Dashboard"
@@ -11,6 +11,15 @@ help:
 	@echo "  make demo     - Run attack simulator against the running local demo app"
 	@echo "  make openapi  - Export the OpenAPI JSON schema to docs/openapi.json"
 	@echo "  make seed     - Seed the database with synthetic telemetry"
+	@echo "  make data     - Download raw corpora and prepare processed splits"
+	@echo "  make train    - Train and evaluate models, export model.joblib"
+
+data:
+	python ml/data/download.py --dataset all
+	python ml/prepare.py
+
+train:
+	python ml/train.py
 
 up:
 	docker compose up -d --build
