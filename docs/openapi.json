@@ -1,0 +1,1195 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI WAF Analytics & Control API",
+    "description": "Frozen API contract per TRD 2.6 providing telemetry, stats, SSE stream, and configuration",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/stats/summary": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Get Summary",
+        "operationId": "get_summary_api_stats_summary_get",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Time window: 5m, 1h, 24h, 7d",
+              "default": "24h",
+              "title": "Range"
+            },
+            "description": "Time window: 5m, 1h, 24h, 7d"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryStatsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/timeseries": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Get Timeseries",
+        "operationId": "get_timeseries_api_stats_timeseries_get",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Time range",
+              "default": "24h",
+              "title": "Range"
+            },
+            "description": "Time range"
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Bucket size: 1m, 5m, 1h",
+              "default": "1h",
+              "title": "Bucket"
+            },
+            "description": "Bucket size: 1m, 5m, 1h"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeSeriesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/attack-types": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Get Attack Types",
+        "operationId": "get_attack_types_api_stats_attack_types_get",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "24h",
+              "title": "Range"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttackTypeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/top-endpoints": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Get Top Endpoints",
+        "operationId": "get_top_endpoints_api_stats_top_endpoints_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "24h",
+              "title": "Range"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopEndpointsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/top-ips": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Get Top Ips",
+        "operationId": "get_top_ips_api_stats_top_ips_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "24h",
+              "title": "Range"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopIPsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "List Events",
+        "operationId": "list_events_api_events_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by attack_type",
+              "title": "Type"
+            },
+            "description": "Filter by attack_type"
+          },
+          {
+            "name": "verdict",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by verdict: allow, flag, block",
+              "title": "Verdict"
+            },
+            "description": "Filter by verdict: allow, flag, block"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{event_id}": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Get Event Detail",
+        "operationId": "get_event_detail_api_events__event_id__get",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{event_id}/feedback": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Submit Feedback",
+        "operationId": "submit_feedback_api_events__event_id__feedback_post",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stream": {
+      "get": {
+        "tags": [
+          "stream"
+        ],
+        "summary": "Sse Event Stream",
+        "description": "Server-Sent Events endpoint emitting live alerts and events.\nDashboard UI subscribes to this for real-time live alert feed.",
+        "operationId": "sse_event_stream_api_stream_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Get Config",
+        "operationId": "get_config_api_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WAFConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Update Config",
+        "operationId": "update_config_api_config_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WAFConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WAFConfig"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AttackTypeItem": {
+        "properties": {
+          "attack_type": {
+            "type": "string",
+            "title": "Attack Type",
+            "description": "Category: sqli, xss, bot_anomaly, etc."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of occurrences"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage",
+            "description": "Percentage of total attacks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "attack_type",
+          "count",
+          "percentage"
+        ],
+        "title": "AttackTypeItem"
+      },
+      "AttackTypeResponse": {
+        "properties": {
+          "total_attacks": {
+            "type": "integer",
+            "title": "Total Attacks"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AttackTypeItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_attacks",
+          "items"
+        ],
+        "title": "AttackTypeResponse"
+      },
+      "EventDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "client_ip": {
+            "type": "string",
+            "title": "Client Ip"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "query_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Summary",
+            "default": ""
+          },
+          "body_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Summary",
+            "default": ""
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "attack_type": {
+            "type": "string",
+            "title": "Attack Type"
+          },
+          "ml_score": {
+            "type": "number",
+            "title": "Ml Score"
+          },
+          "rule_hit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Hit"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms"
+          },
+          "feedback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent",
+            "default": ""
+          },
+          "explanation": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ts",
+          "client_ip",
+          "method",
+          "path",
+          "verdict",
+          "attack_type",
+          "ml_score",
+          "latency_ms"
+        ],
+        "title": "EventDetailResponse"
+      },
+      "EventListItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "client_ip": {
+            "type": "string",
+            "title": "Client Ip"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "query_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Summary",
+            "default": ""
+          },
+          "body_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Summary",
+            "default": ""
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "attack_type": {
+            "type": "string",
+            "title": "Attack Type"
+          },
+          "ml_score": {
+            "type": "number",
+            "title": "Ml Score"
+          },
+          "rule_hit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Hit"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms"
+          },
+          "feedback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ts",
+          "client_ip",
+          "method",
+          "path",
+          "verdict",
+          "attack_type",
+          "ml_score",
+          "latency_ms"
+        ],
+        "title": "EventListItem"
+      },
+      "EventsListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EventListItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "EventsListResponse"
+      },
+      "FeedbackRequest": {
+        "properties": {
+          "feedback": {
+            "type": "string",
+            "enum": [
+              "fp",
+              "tp"
+            ],
+            "title": "Feedback",
+            "description": "'fp' for false positive, 'tp' for true positive"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Optional analyst comment or justification"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feedback"
+        ],
+        "title": "FeedbackRequest"
+      },
+      "FeedbackResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "feedback": {
+            "type": "string",
+            "title": "Feedback"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "id",
+          "feedback"
+        ],
+        "title": "FeedbackResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SummaryStatsResponse": {
+        "properties": {
+          "total_requests": {
+            "type": "integer",
+            "title": "Total Requests",
+            "description": "Total requests processed"
+          },
+          "total_blocked": {
+            "type": "integer",
+            "title": "Total Blocked",
+            "description": "Total blocked requests"
+          },
+          "total_flagged": {
+            "type": "integer",
+            "title": "Total Flagged",
+            "description": "Total flagged (monitor mode) requests"
+          },
+          "total_allowed": {
+            "type": "integer",
+            "title": "Total Allowed",
+            "description": "Total clean allowed requests"
+          },
+          "block_rate": {
+            "type": "number",
+            "title": "Block Rate",
+            "description": "Percentage of requests blocked (0.0 to 100.0)"
+          },
+          "flag_rate": {
+            "type": "number",
+            "title": "Flag Rate",
+            "description": "Percentage of requests flagged (0.0 to 100.0)"
+          },
+          "avg_latency_ms": {
+            "type": "number",
+            "title": "Avg Latency Ms",
+            "description": "Average request inspection latency in milliseconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_requests",
+          "total_blocked",
+          "total_flagged",
+          "total_allowed",
+          "block_rate",
+          "flag_rate",
+          "avg_latency_ms"
+        ],
+        "title": "SummaryStatsResponse"
+      },
+      "TimeSeriesPoint": {
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp",
+            "description": "ISO 8601 formatted bucket timestamp"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total requests in bucket",
+            "default": 0
+          },
+          "threats": {
+            "type": "integer",
+            "title": "Threats",
+            "description": "Total threats (blocked + flagged) in bucket",
+            "default": 0
+          },
+          "blocked": {
+            "type": "integer",
+            "title": "Blocked",
+            "description": "Blocked requests in bucket",
+            "default": 0
+          },
+          "flagged": {
+            "type": "integer",
+            "title": "Flagged",
+            "description": "Flagged requests in bucket",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp"
+        ],
+        "title": "TimeSeriesPoint"
+      },
+      "TimeSeriesResponse": {
+        "properties": {
+          "range": {
+            "type": "string",
+            "title": "Range"
+          },
+          "bucket": {
+            "type": "string",
+            "title": "Bucket"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TimeSeriesPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "range",
+          "bucket",
+          "points"
+        ],
+        "title": "TimeSeriesResponse"
+      },
+      "TopEndpointItem": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Request URI path"
+          },
+          "attack_count": {
+            "type": "integer",
+            "title": "Attack Count",
+            "description": "Number of malicious requests targeted at this path"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total requests targeted at this path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "attack_count",
+          "total_count"
+        ],
+        "title": "TopEndpointItem"
+      },
+      "TopEndpointsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TopEndpointItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "TopEndpointsResponse"
+      },
+      "TopIPItem": {
+        "properties": {
+          "ip": {
+            "type": "string",
+            "title": "Ip",
+            "description": "Client IP address"
+          },
+          "total_requests": {
+            "type": "integer",
+            "title": "Total Requests",
+            "description": "Total requests from this IP"
+          },
+          "blocked_requests": {
+            "type": "integer",
+            "title": "Blocked Requests",
+            "description": "Blocked requests from this IP"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ip",
+          "total_requests",
+          "blocked_requests"
+        ],
+        "title": "TopIPItem"
+      },
+      "TopIPsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TopIPItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "TopIPsResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WAFConfig": {
+        "properties": {
+          "waf_mode": {
+            "type": "string",
+            "enum": [
+              "monitor",
+              "block"
+            ],
+            "title": "Waf Mode",
+            "description": "Operating mode",
+            "default": "block"
+          },
+          "ml_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Ml Threshold",
+            "description": "ML anomaly trigger threshold",
+            "default": 0.75
+          },
+          "max_body_inspect_bytes": {
+            "type": "integer",
+            "maximum": 1048576.0,
+            "minimum": 512.0,
+            "title": "Max Body Inspect Bytes",
+            "description": "Inspection cap in bytes",
+            "default": 16384
+          },
+          "fail_mode": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "title": "Fail Mode",
+            "description": "Fail open or closed on fatal error",
+            "default": "closed"
+          }
+        },
+        "type": "object",
+        "title": "WAFConfig"
+      }
+    }
+  }
+}
