@@ -126,8 +126,8 @@ def init_db(db_url: Optional[str] = None):
         session.commit()
 
 
-def get_db(db_url: Optional[str] = None) -> Generator[Session, None, None]:
-    get_engine(db_url)
+def get_db() -> Generator[Session, None, None]:
+    get_engine()
     session = _SessionFactory()
     try:
         yield session
