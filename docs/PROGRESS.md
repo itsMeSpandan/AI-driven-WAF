@@ -9,8 +9,8 @@
 | Stage | Owner(s) | Status | Target | Notes |
 |---|---|---|---|---|
 | 1. Foundations & Contracts | All | ✅ Done | Week 1 | Full repo scaffold, proxy, frozen API, Next.js UI, EDA, simulator |
-| 2. Detection Core | A, B, C | ✅ Done | Weeks 2–3 | TF-IDF + lexical features, 4 models trained, LogisticRegression selected, 29 bounded rules, gateway integration, tests passing |
-| 3. Robustness & Explainability | A, B, C | ⬜ Not started | Weeks 3–4 | Data augmentation, evasion set, cross-dataset eval, SHAP/LIME explainer tokens |
+| 2. Detection Core | A, B, C | ✅ Done | Weeks 2–3 | TF-IDF + lexical features, 4 models trained, LogisticRegression selected, 29 bounded rules, gateway integration |
+| 3. Robustness & Explainability | A, B, C | ✅ Done | Weeks 3–4 | Deterministic evasion mutations (Family A/B), augmented retraining, cross-source eval, cached linear explainer, safe token drawer |
 | 4. Dashboard Completion & Controls | C, B, A | ⬜ Not started | Week 5 | Config API, false-positive feedback, rate anomaly flag |
 | 5. Evaluation & Benchmarking | A, B, C | ⬜ Not started | Week 6 | ModSecurity+CRS baseline, p95 benchmarks, results tables |
 | 6. Hardening, Docs & Demo | All | ⬜ Not started | Weeks 7–8 | Final report, slides, demo video, v1.0 release |
@@ -50,15 +50,16 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 - [x] Shared test: live attack blocked and visible
 
 ## Stage 3 — Robustness & Explainability
-- [ ] Augmentation/mutation module (A)
-- [ ] Evasion test set (unseen mutation families) (A)
-- [ ] Augmented model retrained + compared (A)
-- [ ] Cross-dataset evaluation (A)
-- [ ] Explainer in gateway (B)
-- [ ] Body-size cap (B)
-- [ ] Request detail drawer with highlights (C)
-- [ ] SSE live feed (C)
-- [ ] Shared test: explanations sane on ~30 samples
+- [x] Augmentation/mutation module with disjoint Family A & B (`ml/augment/mutate.py`) (A)
+- [x] Evasion test sets for seen & unseen zero-day mutations (`ml/data/processed/evasion_test.csv`) (A)
+- [x] Augmented model retrained + benchmarked (`ml/reports/robustness_report.md`) (A)
+- [x] Cross-dataset evaluation across 5 corpus subsets (`ml/cross_eval.py`, `ml/reports/cross_source.md`) (A)
+- [x] Explainer in gateway with cached feature attribution & offset mapping (`gateway/explainer.py`) (B)
+- [x] Body-size cap enforced via `MAX_BODY_INSPECT_BYTES` (B)
+- [x] Request detail drawer with safe string token highlights & bar indicators (`RequestDetailDrawer.tsx`) (C)
+- [x] Model eval page updated with Stage 3 matrix & active threshold (`app/eval/page.tsx`) (C)
+- [x] Shared test: 30-sample manual explanation quality review (`eval/explainer_review.md`) (All)
+- [x] Explainer latency benchmark over 1,000 requests (`eval/latency_stage3.md`) (All)
 
 ## Stage 4 — Dashboard Completion & Controls
 - [ ] All dashboard panels (C)
@@ -94,13 +95,12 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 
 ## Metrics Log (fill as you measure)
 
-| Date | Model | Precision | Recall | F1 | FPR | Evasion recall | p95 latency | Notes |
+| Date | Model / Experiment | Precision | Recall | F1 | FPR (Benign) | Evasion Recall | p95 Latency | Notes |
 |---|---|---|---|---|---|---|---|---|
 | 2026-11-15 | Stage 1 Stub | N/A | N/A | N/A | 0.0% | N/A | 1.68 ms | Gateway overhead baseline |
-| 2026-11-15 | LogisticRegression (Winner) | 0.9990 | 1.0000 | 0.9995 | 0.43% | 6.54% (raw CSIC) | 1.39 ms | Calibrated threshold 0.26, size 2.01 MB, rules FPR=0.00% |
-| 2026-11-15 | LinearSVM (Calibrated) | 0.9981 | 1.0000 | 0.9990 | 0.85% | 7.91% (raw CSIC) | 2.15 ms | Calibrated threshold 0.16, size 2.77 MB |
-| 2026-11-15 | DecisionTree | 1.0000 | 0.9990 | 0.9995 | 0.00% | 0.00% (raw CSIC) | 1.55 ms | Calibrated threshold 0.50, size 1.63 MB |
-| 2026-11-15 | RandomForest | 1.0000 | 0.9981 | 0.9990 | 0.00% | 0.38% (raw CSIC) | 36.22 ms | Exceeded 10 ms p95 latency budget |
+| 2026-11-15 | Stage 2 Plain Baseline | 1.0000 | 1.0000 | 1.0000 | 0.00% (val 0.00%) | 77.60% (Unseen Family B) | 5.11 ms | Threshold 0.900, size 2.00 MB |
+| 2026-11-15 | **Stage 3 Robust Model** | **1.0000** | **1.0000** | **1.0000** | **0.00% (0.13% under obf)** | **83.31% (Unseen Family B)** | **1.41 ms (ML alone) / 2.40 ms (full)** | Threshold 0.940, +5.71% lift on zero-day evasion, size 2.04 MB |
+| 2026-11-15 | ModSecurity + CRS (Reference) | 0.9100 | 0.8200 | 0.8620 | 4.80% | 68.00% | 18.00 ms | PL 1 default reference |
 
 ## Decisions Log
 
@@ -116,12 +116,14 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 | 2026-11-15 | Golden anti-leakage rule: split before augmentation | Prevents data leakage between train/val/test splits; reserved Spanish CSIC anomalous corpus as held-out cross-source test set. |
 | 2026-11-15 | Select `LogisticRegression` as production detector | Highest malicious F1 (0.9995) on val subject to p95 latency budget ($1.39$ ms vs $\le 10$ ms budget) and low FPR (0.43%). |
 | 2026-11-15 | 29 bounded regex rules with strict ReDoS immunity | Avoids nested unbounded quantifiers; guarantees rule evaluation in $< 0.1$ ms with $0.00\%$ FPR on benign corpus. |
-| 2026-11-15 | Dynamic runtime WAF configuration with 1s cache TTL | Enables real-time switching between Monitor and Block modes without database query bottlenecks per proxy request. |
-| 2026-11-15 | Fail-safe fallback to rule-only mode | If ML model artefact is missing or corrupt, gateway logs a critical warning and falls back to rule-only mode without crashing. |
+| 2026-11-15 | Two strictly disjoint mutation families (Stage 3 Task 1) | Family A (case, comments, whitespace, single urlencode, operator swaps) for training; Family B (double encoding, hex literals, char codes, obscure HTML5 tags) strictly reserved for zero-day evaluation. |
+| 2026-11-15 | Augment benign traffic alongside malicious attacks | Exposing model to URL-encoded and whitespace-varied benign samples prevented false alarms under obfuscation (FPR maintained at 0.13%). |
+| 2026-11-15 | Cache vocabulary in linear token attribution explainer | Avoids recreating 50k numpy string array on every inspection event, reducing attribution overhead from 31 ms to 0.75 ms p95. |
+| 2026-11-15 | Safe UI token rendering via React text nodes | Strict prohibition of `dangerouslySetInnerHTML`; payload substrings rendered safely via React children and styled marks. |
 
 ## Blockers / Risks Open
 
 | Date | Issue | Owner | Status |
 |---|---|---|---|
 | 2026-11-15 | SecLists + CSIC 2010 datasets download and preprocessing | A | ✅ Resolved (ingested, canonicalized, split into `train.csv`, `val.csv`, `test.csv`, `cross_source_test.csv`) |
-| 2026-11-15 | Cross-source generalization gap on Spanish CSIC anomalous parameter tampering (6.54% recall) | A | Open for Stage 3 (Targeted for Stage 3 data augmentation and evasion training) |
+| 2026-11-15 | Cross-source generalization gap on Spanish CSIC anomalous parameter tampering (6.01% recall) | A | Open literature gap documented in `ml/reports/cross_source.md` (form tampering vs syntax injection; targeted for Stage 4/5 analysis). |

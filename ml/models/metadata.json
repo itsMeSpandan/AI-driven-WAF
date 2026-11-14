@@ -1,83 +1,130 @@
 {
-  "model_version": "20261114_195540",
-  "model_name": "LogisticRegression",
-  "threshold": 0.26,
-  "created_at": "2026-11-14T19:55:40.517490+00:00",
+  "model_version": "Stage3_Robust_20261114_204029",
+  "model_name": "LogisticRegression_Augmented",
+  "threshold": 0.94,
+  "created_at": "2026-11-14T20:40:29.093755+00:00",
   "selection_rule": "Highest val F1 subject to p95 latency <= 10ms and FPR <= 2.5%",
   "hyperparameters": {
     "classifier__C": 5.0
   },
-  "feature_config": {
-    "max_tfidf_features": 50000,
-    "analyzer": "char_wb",
-    "ngram_range": [
-      2,
-      5
+  "augmentation_config": {
+    "family_a_training": [
+      "case",
+      "inline_comments",
+      "whitespace",
+      "url_encode",
+      "operator_swap",
+      "benign_obfuscation"
     ],
-    "sublinear_tf": true,
-    "lexical_features": [
-      "length",
-      "special_char_ratio",
-      "digit_ratio",
-      "shannon_entropy",
-      "sql_keyword_count",
-      "xss_marker_count",
-      "quote_comment_count",
-      "max_token_length"
-    ]
+    "family_b_held_out_evasion": [
+      "double_url_encode",
+      "hex_literal",
+      "concat_tricks",
+      "char_code",
+      "obscure_tags",
+      "compound_evasion"
+    ],
+    "training_samples_augmented": 16824
   },
   "metrics": {
-    "validation": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1_malicious": 1.0,
-      "f1_macro": 1.0,
-      "fpr": 0.0,
-      "roc_auc": 1.0,
-      "confusion_matrix": {
-        "tn": 235,
-        "fp": 0,
-        "fn": 0,
-        "tp": 1019
+    "plain_model_baseline": {
+      "threshold": 0.9,
+      "test": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_malicious": 1.0,
+        "f1_macro": 1.0,
+        "fpr": 0.0,
+        "roc_auc": 1.0,
+        "confusion_matrix": {
+          "tn": 1507,
+          "fp": 0,
+          "fn": 0,
+          "tp": 1019
+        }
+      },
+      "benign_obfuscated_fpr": 0.0007,
+      "evasion_family_a_recall": 1.0,
+      "evasion_family_b_recall": 0.776,
+      "cross_source": {
+        "precision": 1.0,
+        "recall": 0.0582,
+        "f1_malicious": 0.1101,
+        "f1_macro": 0.055,
+        "fpr": 0.0,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 0,
+          "fn": 11366,
+          "tp": 703
+        }
+      },
+      "latency_ms": {
+        "p50": 3.036,
+        "p95": 5.111
       }
     },
-    "test": {
-      "precision": 0.999,
-      "recall": 1.0,
-      "f1_malicious": 0.9995,
-      "f1_macro": 0.9987,
-      "fpr": 0.0043,
-      "roc_auc": 1.0,
-      "confusion_matrix": {
-        "tn": 234,
-        "fp": 1,
-        "fn": 0,
-        "tp": 1020
-      }
-    },
-    "cross_source_held_out": {
-      "precision": 1.0,
-      "recall": 0.0646,
-      "f1_malicious": 0.1214,
-      "f1_macro": 0.0607,
-      "fpr": 0.0,
-      "roc_auc": 0.0,
-      "confusion_matrix": {
-        "tn": 0,
-        "fp": 0,
-        "fn": 2460,
-        "tp": 170
+    "augmented_model": {
+      "threshold": 0.94,
+      "validation": {
+        "precision": 1.0,
+        "recall": 0.999,
+        "f1_malicious": 0.9995,
+        "f1_macro": 0.9996,
+        "fpr": 0.0,
+        "roc_auc": 1.0,
+        "confusion_matrix": {
+          "tn": 1506,
+          "fp": 0,
+          "fn": 1,
+          "tp": 1019
+        }
+      },
+      "test": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_malicious": 1.0,
+        "f1_macro": 1.0,
+        "fpr": 0.0,
+        "roc_auc": 1.0,
+        "confusion_matrix": {
+          "tn": 1507,
+          "fp": 0,
+          "fn": 0,
+          "tp": 1019
+        }
+      },
+      "benign_obfuscated_fpr": 0.0013,
+      "evasion_family_a_recall": 1.0,
+      "evasion_family_b_recall": 0.8331,
+      "cross_source": {
+        "precision": 1.0,
+        "recall": 0.0379,
+        "f1_malicious": 0.0731,
+        "f1_macro": 0.0366,
+        "fpr": 0.0,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 0,
+          "fn": 11611,
+          "tp": 458
+        }
+      },
+      "latency_ms": {
+        "p50": 3.226,
+        "p95": 5.539
+      },
+      "family_b_breakdown": {
+        "sqli_recall": 1.0,
+        "xss_recall": 0.8121
       }
     }
   },
-  "latency_ms": {
-    "p50": 2.222,
-    "p95": 4.879
-  },
-  "model_size_mb": 2.01,
+  "model_size_mb": 2.0,
   "libraries": {
     "scikit_learn": "1.6.0",
     "python": "3.15.2"
-  },
-  "training_samples": 5853
+  }
 }

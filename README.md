@@ -109,29 +109,36 @@ make train  # Train 4 candidate models, calibrate threshold, export model.joblib
 ```
 
 ### 5. Benchmark Latency Overhead
-To benchmark request latency across WAF Off, Rule-Only, and Full Rule + ML:
+To benchmark request latency across WAF Off, Rule-Only, Full Pipeline, and Explainer Attribution:
 ```bash
-make benchmark
-# Report saved to eval/latency_stage2.md
+python eval/benchmark_latency_stage3.py
+# Report saved to eval/latency_stage3.md
 ```
 
-### 6. Seed Demo Telemetry
+### 6. Evaluate Robustness & Cross-Source Transfer
+```bash
+python ml/cross_eval.py               # Generates ml/reports/cross_source.md
+python eval/generate_explainer_review.py # Generates eval/explainer_review.md
+```
+
+### 7. Seed Demo Telemetry
 ```bash
 make seed
 # or
 python dashboard/api/seed_demo_data.py
 ```
 
-### 7. Run the Attack Simulator
+### 8. Run the Attack Simulator (Including Evasions)
 ```bash
 make demo
-# or
-python demo/attack_simulator.py --target http://localhost:8080 --count 30
+# or test zero-day evasion mutations:
+python demo/attack_simulator.py --target http://localhost:8080 --count 30 --types sqli,xss,evasion_a,evasion_b,benign
 ```
 
-### 8. Run Test Suites
+### 9. Run Test Suites
 ```bash
 make test
+# runs full test suite: pytest -v gateway/tests dashboard/api/tests ml/tests
 ```
 
 ---
@@ -139,7 +146,7 @@ make test
 ## Operating Modes
 
 The WAF Gateway supports two runtime modes configured via `.env` (`WAF_MODE`), runtime DB settings, or the Dashboard UI:
-- **`block`** (Enforcement Mode): Malicious requests violating rules or exceeding the ML threshold ($0.26$) are immediately rejected with an HTTP 403 Forbidden page and tracked with an incident Request ID.
+- **`block`** (Enforcement Mode): Malicious requests violating rules or exceeding the ML threshold ($0.940$) are immediately rejected with an HTTP 403 Forbidden page and tracked with an incident Request ID.
 - **`monitor`** (Telemetry / Dry-Run Mode): All requests are forwarded to the upstream application (HTTP 200), but threats are flagged with `x-waf-verdict: flag` and logged to the analytics database for SecOps review.
 
 ---

@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from gateway.detector import MLResult, detector
+from gateway.explainer import explain_request
 from gateway.normalizer import NormalisedRequest
 from gateway.rules import evaluate_rules
 
@@ -66,26 +67,15 @@ def explain(
     norm: Optional[NormalisedRequest],
     rule: RuleResult,
     ml: MLResult,
+    verdict_action: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Generates structured per-request diagnostic explanation.
+    Uses Stage 3 explainer with linear token attribution, character offsets, and lexical notes.
     """
-    summary = "Clean request"
-    if rule.hit and ml.score >= 0.26:
-        summary = f"Rule hit: {rule.rule_id} ({rule.attack_type}) + ML anomaly score {ml.score:.4f}"
-    elif rule.hit:
-        summary = f"Rule hit: {rule.rule_id} ({rule.attack_type})"
-    elif ml.score >= 0.26:
-        summary = f"ML anomaly score: {ml.score:.4f} (type: {ml.attack_type})"
-
-    return {
-        "top_tokens": [rule.matched_pattern] if rule.matched_pattern else [],
-        "matched_rule": rule.rule_id if rule.hit else None,
-        "matched_pattern": rule.matched_pattern,
-        "model_version": ml.model_version,
-        "confidence": ml.confidence,
-        "summary": summary,
-    }
+    if verdict_action is None:
+        verdict_action = "block" if (rule.hit or ml.score >= 0.26) else "allow"
+    return explain_request(norm, rule, ml, verdict_action=verdict_action)
 
 
 def decide(
@@ -114,7 +104,7 @@ def decide(
     else:
         action = "allow"
 
-    expl = explain(norm, rule, ml)
+    expl = explain(norm, rule, ml, verdict_action=action)
 
     return Verdict(
         action=action,

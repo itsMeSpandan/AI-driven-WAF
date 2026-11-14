@@ -10,20 +10,30 @@ This directory contains the data preparation, feature extraction, model training
 ml/
 ├── data/
 │   ├── raw/             # Raw candidate datasets (gitignored)
-│   ├── processed/       # Canonical normalized & deduplicated splits (train/val/test/cross_source)
+│   ├── processed/       # Canonical normalized & deduplicated splits (train/val/test/cross_source/evasion)
 │   ├── sample/          # Small bundled sample CSV for CI / tests (committed)
 │   │   └── requests_sample.csv
 │   ├── SOURCES.md       # Dataset URLs, provenance, and licenses
 │   └── download.py      # Automated dataset downloader
+├── augment/             # Evasion payload mutation engine (Stage 3)
+│   ├── mutate.py        # Seeded deterministic Family A (seen) and Family B (unseen) mutations
+│   ├── llm_variants.py  # Optional LLM-assisted variant generator (off by default)
+│   └── README.md        # Detailed mutation families and normalisation absorption specs
 ├── features.py          # TF-IDF char n-grams (2-5) + 8 lexical features extractor
+├── prepare_augmented.py # Generates train_augmented.csv, evasion_test.csv, benign_obfuscated_test.csv
 ├── evaluate.py          # Metric calculations, threshold calibration, and 1,000-run latency profiler
-├── train.py             # Model training across 4 candidate algorithms + hyperparameter tuning
+├── train.py             # Model training (supports --augmented flag for robust retraining)
+├── cross_eval.py        # Cross-source generalization evaluator across 5 corpus subsets
 ├── measure_rules_fpr.py # Rule-only false-positive rate evaluation harness
-├── models/              # Exported production model artefact & metadata
-│   ├── model.joblib     # Production LogisticRegression pipeline (vectorizer + scaler + model)
-│   └── metadata.json    # Calibrated threshold (0.26), library versions, and metrics
+├── models/              # Exported production model artefacts & metadata
+│   ├── model.joblib     # Active robust model (symbolic link or copy of model_augmented.joblib)
+│   ├── model_plain.joblib # Stage 2 baseline model (saved for comparative evaluation)
+│   ├── model_augmented.joblib # Stage 3 robust augmented model
+│   └── metadata.json    # Calibrated threshold (0.940), library versions, and metrics
 ├── reports/             # Generated comparison reports
 │   ├── model_comparison.md # 4-model evaluation table across val, test, and cross-source test
+│   ├── robustness_report.md # Plain vs Augmented robustness matrix across evasion sets
+│   ├── cross_source.md  # Detailed cross-dataset evaluation across all 5 corpus sources
 │   └── rules_fpr.md     # 29-rule false-positive rate audit report
 ├── notebooks/           # Jupyter exploration & evaluation notebooks
 │   └── 01_eda.ipynb     # Exploratory Data Analysis skeleton

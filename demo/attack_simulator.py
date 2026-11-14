@@ -54,6 +54,24 @@ def run_simulator(
     sqli_payloads = load_lines("sqli.txt") or ["' OR '1'='1", "admin' --"]
     xss_payloads = load_lines("xss.txt") or ["<script>alert(1)</script>", "<img src=x onerror=alert(1)>"]
 
+    # Load Stage 3 evasion evaluation payloads if available
+    evasion_a_payloads: list[str] = []
+    evasion_b_payloads: list[str] = []
+    evasion_a_file = Path(__file__).resolve().parent.parent / "ml" / "data" / "processed" / "evasion_test_familyA.csv"
+    evasion_b_file = Path(__file__).resolve().parent.parent / "ml" / "data" / "processed" / "evasion_test.csv"
+
+    if evasion_a_file.exists():
+        import csv
+        with open(evasion_a_file, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            evasion_a_payloads = [row["payload"] for row in reader if row.get("payload")]
+
+    if evasion_b_file.exists():
+        import csv
+        with open(evasion_b_file, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            evasion_b_payloads = [row["payload"] for row in reader if row.get("payload")]
+
     delay_between_requests = 1.0 / rate if rate > 0 else 0.5
     target_clean = target.rstrip("/")
 
@@ -90,6 +108,18 @@ def run_simulator(
                     payload = random.choice(xss_payloads)
                     encoded_payload = urllib.parse.quote(payload)
                     url = f"{target_clean}/feedback?comment={encoded_payload}"
+                    resp = client.get(url)
+
+                elif chosen_type in ("evasion_a", "evasion"):
+                    payload = random.choice(evasion_a_payloads) if evasion_a_payloads else "admin'/**/OR/**/'1'='1"
+                    encoded_payload = urllib.parse.quote(payload)
+                    url = f"{target_clean}/search?q={encoded_payload}"
+                    resp = client.get(url)
+
+                elif chosen_type == "evasion_b":
+                    payload = random.choice(evasion_b_payloads) if evasion_b_payloads else "%2527%2520OR%25201=1"
+                    # Payload is already obfuscated/encoded, transmit directly or path-escaped
+                    url = f"{target_clean}/login?user={payload}"
                     resp = client.get(url)
 
                 else:

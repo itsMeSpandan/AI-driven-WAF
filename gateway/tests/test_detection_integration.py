@@ -119,3 +119,56 @@ def test_failsafe_fallback_when_model_missing(client, tmp_path):
         resp_clean = client.get("/about-us")
         assert resp_clean.status_code == 200
         assert resp_clean.headers.get("x-waf-verdict") == "allow"
+
+
+def test_obfuscated_sqli_payload_blocked_with_explanation(client):
+    """
+    Stage 3 Task 7: Obfuscated SQLi mutation (inline comments / whitespace variants)
+    is blocked in block mode and generates non-empty explanation tokens.
+    """
+    with patch("gateway.main.get_current_mode", return_value="block"):
+        # Payload with inline comment evasion
+        resp = client.get("/search?q=admin'/**/OR/**/'1'='1")
+        assert resp.status_code == 403
+        assert resp.headers.get("X-WAF-Verdict") == "block"
+        req_id = resp.headers.get("X-WAF-Request-ID")
+        assert req_id is not None
+
+        # Verify explanation directly from pipeline for this input
+        from gateway.normalizer import normalise_request
+        from gateway.pipeline import rule_check, ml_score, decide
+        norm = normalise_request("GET", "/search", "q=admin'/**/OR/**/'1'='1", {}, b"")
+        rule = rule_check(norm)
+        ml = ml_score(norm)
+        verdict = decide(rule, ml, mode="block", threshold=0.94, norm=norm)
+
+        assert verdict.action == "block"
+        assert "top_tokens" in verdict.explanation
+        assert len(verdict.explanation["top_tokens"]) > 0
+        assert "summary" in verdict.explanation
+
+
+def test_obfuscated_xss_payload_blocked_with_explanation(client):
+    """
+    Stage 3 Task 7: Obfuscated XSS event handler variant is blocked
+    and generates non-empty explanation tokens and character offsets.
+    """
+    with patch("gateway.main.get_current_mode", return_value="block"):
+        resp = client.get("/comments?body=%3Csvg/onload=alert(1)%3E")
+        assert resp.status_code == 403
+        assert resp.headers.get("X-WAF-Verdict") == "block"
+
+        from gateway.normalizer import normalise_request
+        from gateway.pipeline import rule_check, ml_score, decide
+        norm = normalise_request("GET", "/comments", "body=<svg/onload=alert(1)>", {}, b"")
+        rule = rule_check(norm)
+        ml = ml_score(norm)
+        verdict = decide(rule, ml, mode="block", threshold=0.94, norm=norm)
+
+        assert verdict.action == "block"
+        assert len(verdict.explanation["top_tokens"]) > 0
+        token_info = verdict.explanation["top_tokens"][0]
+        assert "start" in token_info
+        assert "end" in token_info
+        assert norm.canonical_text[token_info["start"]:token_info["end"]] == token_info["text"]
+
