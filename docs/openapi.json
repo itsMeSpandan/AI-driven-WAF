@@ -681,6 +681,18 @@
             ],
             "title": "Feedback"
           },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version",
+            "default": "none"
+          },
           "user_agent": {
             "anyOf": [
               {
@@ -797,6 +809,18 @@
               }
             ],
             "title": "Feedback"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version",
+            "default": "none"
           }
         },
         "type": "object",

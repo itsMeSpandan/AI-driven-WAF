@@ -101,24 +101,46 @@ The services will be available at:
 - **Analytics Dashboard**: `http://localhost:3000`
 - **Dashboard API & Docs**: `http://localhost:8000/docs`
 
-### 4. Seed Demo Telemetry
+### 4. Data Preparation & Model Training
+To download raw training corpora (SecLists and CSIC 2010), canonicalize, and train the ML detector:
+```bash
+make data   # Download raw corpora and prepare stratified train/val/test splits
+make train  # Train 4 candidate models, calibrate threshold, export model.joblib
+```
+
+### 5. Benchmark Latency Overhead
+To benchmark request latency across WAF Off, Rule-Only, and Full Rule + ML:
+```bash
+make benchmark
+# Report saved to eval/latency_stage2.md
+```
+
+### 6. Seed Demo Telemetry
 ```bash
 make seed
 # or
 python dashboard/api/seed_demo_data.py
 ```
 
-### 5. Run the Attack Simulator
+### 7. Run the Attack Simulator
 ```bash
 make demo
 # or
 python demo/attack_simulator.py --target http://localhost:8080 --count 30
 ```
 
-### 6. Run Test Suites
+### 8. Run Test Suites
 ```bash
 make test
 ```
+
+---
+
+## Operating Modes
+
+The WAF Gateway supports two runtime modes configured via `.env` (`WAF_MODE`), runtime DB settings, or the Dashboard UI:
+- **`block`** (Enforcement Mode): Malicious requests violating rules or exceeding the ML threshold ($0.26$) are immediately rejected with an HTTP 403 Forbidden page and tracked with an incident Request ID.
+- **`monitor`** (Telemetry / Dry-Run Mode): All requests are forwarded to the upstream application (HTTP 200), but threats are flagged with `x-waf-verdict: flag` and logged to the analytics database for SecOps review.
 
 ---
 

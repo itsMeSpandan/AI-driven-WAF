@@ -1,6 +1,10 @@
 """
 WAF inspection pipeline interface and decision logic.
-Provides stub stages for Stage 1 so Stage 2 can plug in detection without refactor.
+Implements Stage 2 Task 5:
+  - Real rule layer integration (rules.py)
+  - Real ML detector scoring (detector.py)
+  - Dynamic thresholding and Monitor vs Block mode decision logic
+  - Structured explanation generation
 """
 
 from __future__ import annotations
@@ -8,7 +12,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from gateway.detector import MLResult, detector
 from gateway.normalizer import NormalisedRequest
+from gateway.rules import evaluate_rules
 
 
 @dataclass
@@ -22,15 +28,6 @@ class RuleResult:
 
 
 @dataclass
-class MLResult:
-    """Outcome of ML model classification and scoring."""
-
-    score: float = 0.0
-    attack_type: str = "benign"
-    confidence: float = 0.0
-
-
-@dataclass
 class Verdict:
     """Final decision regarding whether to allow, flag, or block the request."""
 
@@ -39,22 +36,30 @@ class Verdict:
     rule_hit: Optional[str]
     ml_score: float
     explanation: Dict[str, Any] = field(default_factory=dict)
+    model_version: str = "none"
 
 
 def rule_check(norm: NormalisedRequest) -> RuleResult:
     """
-    Stage 1 Stub: Rule engine.
-    Always returns no hit. Will be loaded with regex signatures in Stage 2.
+    Evaluates bounded regex signatures from rules.py against canonical text.
     """
+    hit = evaluate_rules(norm.canonical_text)
+    if hit:
+        return RuleResult(
+            hit=True,
+            rule_id=hit.rule_id,
+            attack_type=hit.category,
+            matched_pattern=hit.matched_substring,
+        )
     return RuleResult(hit=False)
 
 
 def ml_score(norm: NormalisedRequest) -> MLResult:
     """
-    Stage 1 Stub: ML detector.
-    Always returns benign with 0.0 score. Real model plugged in Stage 2.
+    Evaluates trained ML detector pipeline against canonical text.
+    Falls back gracefully to rule-only MLResult if model is absent.
     """
-    return MLResult(score=0.0, attack_type="benign", confidence=1.0)
+    return detector.score(norm.canonical_text)
 
 
 def explain(
@@ -63,17 +68,23 @@ def explain(
     ml: MLResult,
 ) -> Dict[str, Any]:
     """
-    Stage 1 Stub: Per-request explainer.
-    Returns token highlights and rule diagnostics.
+    Generates structured per-request diagnostic explanation.
     """
+    summary = "Clean request"
+    if rule.hit and ml.score >= 0.26:
+        summary = f"Rule hit: {rule.rule_id} ({rule.attack_type}) + ML anomaly score {ml.score:.4f}"
+    elif rule.hit:
+        summary = f"Rule hit: {rule.rule_id} ({rule.attack_type})"
+    elif ml.score >= 0.26:
+        summary = f"ML anomaly score: {ml.score:.4f} (type: {ml.attack_type})"
+
     return {
-        "top_tokens": [],
+        "top_tokens": [rule.matched_pattern] if rule.matched_pattern else [],
         "matched_rule": rule.rule_id if rule.hit else None,
-        "summary": (
-            f"Rule hit: {rule.rule_id}"
-            if rule.hit
-            else f"ML anomaly score: {ml.score:.3f}"
-        ),
+        "matched_pattern": rule.matched_pattern,
+        "model_version": ml.model_version,
+        "confidence": ml.confidence,
+        "summary": summary,
     }
 
 
@@ -81,7 +92,7 @@ def decide(
     rule: RuleResult,
     ml: MLResult,
     mode: str = "block",
-    threshold: float = 0.75,
+    threshold: float = 0.26,
     norm: Optional[NormalisedRequest] = None,
 ) -> Verdict:
     """
@@ -111,4 +122,5 @@ def decide(
         rule_hit=rule.rule_id if rule.hit else None,
         ml_score=ml.score,
         explanation=expl,
+        model_version=ml.model_version,
     )

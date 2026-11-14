@@ -54,6 +54,7 @@ def list_events(
             rule_hit=row.rule_hit,
             latency_ms=row.latency_ms,
             feedback=row.feedback,
+            model_version=getattr(row, "model_version", "none"),
         )
         for row in rows
     ]
@@ -83,6 +84,7 @@ def get_event_detail(event_id: str, db: Session = Depends(get_db)):
         latency_ms=event.latency_ms,
         explanation=event.explanation or {},
         feedback=event.feedback,
+        model_version=getattr(event, "model_version", "none"),
     )
 
 

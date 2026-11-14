@@ -31,7 +31,10 @@ logs:
 	docker compose logs -f
 
 test:
-	pytest -v gateway/tests dashboard/api/tests
+	pytest -v gateway/tests dashboard/api/tests ml/tests
+
+benchmark:
+	python eval/benchmark_latency.py
 
 lint:
 	python -m ruff check gateway dashboard ml demo || echo "Ruff check complete"

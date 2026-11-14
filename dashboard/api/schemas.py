@@ -79,6 +79,7 @@ class EventListItem(BaseModel):
     rule_hit: Optional[str] = None
     latency_ms: float
     feedback: Optional[str] = None
+    model_version: Optional[str] = "none"
 
 
 class EventsListResponse(BaseModel):

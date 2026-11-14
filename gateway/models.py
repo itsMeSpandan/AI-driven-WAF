@@ -23,6 +23,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -51,6 +52,7 @@ class Event(Base):
     latency_ms = Column(Float, default=0.0, nullable=False)
     explanation = Column(JSON, default=dict)
     feedback = Column(String(16), nullable=True)  # 'fp', 'tp', None
+    model_version = Column(String(64), default="none", nullable=True)
 
     __table_args__ = (
         Index("idx_events_ts", "ts"),
@@ -100,7 +102,7 @@ def get_engine(db_url: Optional[str] = None):
             if parent:
                 os.makedirs(parent, exist_ok=True)
 
-        connect_args = {"check_same_thread": False} if "sqlite" in url else {}
+        connect_args = {"check_same_thread": False, "timeout": 30.0} if "sqlite" in url else {}
         _engine = create_engine(url, connect_args=connect_args)
         _SessionFactory = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
     return _engine
@@ -110,6 +112,14 @@ def init_db(db_url: Optional[str] = None):
     """Initialize database tables and set initial configuration defaults."""
     engine = get_engine(db_url)
     Base.metadata.create_all(bind=engine)
+
+    # Lightweight migration: ensure model_version column exists on events
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE events ADD COLUMN model_version VARCHAR(64) DEFAULT 'none'"))
+            conn.commit()
+        except Exception:
+            pass
 
     # Populate default configurations if missing
     with sessionmaker(bind=engine)() as session:

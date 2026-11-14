@@ -63,6 +63,7 @@ async def sse_event_stream(request: Request):
                                 "ml_score": ev.ml_score,
                                 "rule_hit": ev.rule_hit,
                                 "latency_ms": ev.latency_ms,
+                                "model_version": getattr(ev, "model_version", "none"),
                             }
                             yield f"event: alert\ndata: {json.dumps(data)}\n\n"
                     else:

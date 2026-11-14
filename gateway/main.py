@@ -25,6 +25,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from gateway.config import settings
+from gateway.detector import detector
 from gateway.masking import mask_body_summary, mask_query_string
 from gateway.models import Event, get_engine, init_db
 from gateway.normalizer import normalise_request
@@ -33,6 +34,47 @@ from gateway.pipeline import decide, ml_score, rule_check
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("waf-gateway")
+
+# Dynamic runtime configuration cache
+_config_cache: Dict[str, Any] = {}
+_config_cache_time: float = 0.0
+
+
+def get_runtime_config() -> Dict[str, Any]:
+    global _config_cache, _config_cache_time
+    now = time.monotonic()
+    if now - _config_cache_time < 1.0 and _config_cache:
+        return _config_cache
+
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from gateway.models import Config
+
+        engine = get_engine(settings.db_url)
+        Session = sessionmaker(bind=engine)
+        with Session() as session:
+            rows = session.query(Config).all()
+            _config_cache = {r.key: r.value for r in rows}
+            _config_cache_time = now
+            return _config_cache
+    except Exception:
+        return _config_cache or {}
+
+
+def get_current_mode() -> str:
+    cfg = get_runtime_config()
+    return cfg.get("waf_mode", settings.waf_mode)
+
+
+def get_current_threshold() -> float:
+    cfg = get_runtime_config()
+    val = cfg.get("ml_threshold")
+    if val is not None:
+        try:
+            return float(val)
+        except ValueError:
+            pass
+    return getattr(detector, "calibrated_threshold", settings.ml_threshold)
 
 # Hop-by-hop headers according to RFC 7230 / RFC 2616 to strip when proxying
 HOP_BY_HOP_HEADERS = {
@@ -139,12 +181,13 @@ async def log_worker() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: initialize database schema, background worker and HTTP client
-    global http_client, worker_task
+    global http_client, worker_task, log_queue
     try:
         init_db(settings.db_url)
     except Exception as e:
         logger.warning("Could not initialize DB on startup: %s. Continuing...", e)
 
+    log_queue = asyncio.Queue(maxsize=settings.log_queue_max_size)
     http_client = httpx.AsyncClient(
         timeout=httpx.Timeout(30.0, connect=5.0),
         follow_redirects=False,
@@ -175,12 +218,17 @@ app = FastAPI(
 
 @app.get("/healthz")
 async def healthz():
-    """Liveness check endpoint. Not logged as an inspection event."""
+    """Liveness & detector status check endpoint. Not logged as an inspection event."""
     return {
         "status": "ok",
         "service": "waf-gateway",
-        "waf_mode": settings.waf_mode,
+        "waf_mode": get_current_mode(),
         "upstream": settings.upstream_url,
+        "detector_status": "active" if detector.is_loaded else "rule-only-fallback",
+        "model_loaded": detector.is_loaded,
+        "model_name": detector.metadata.get("model_name", "None"),
+        "model_version": detector.model_version,
+        "threshold": get_current_threshold(),
     }
 
 
@@ -202,6 +250,9 @@ async def proxy_catch_all(request: Request, path: str):
     raw_body = await request.body()
     user_agent = request.headers.get("user-agent", "")
 
+    curr_mode = get_current_mode()
+    curr_threshold = get_current_threshold()
+
     # 1. Normalise & Inspect
     try:
         norm = normalise_request(
@@ -213,16 +264,16 @@ async def proxy_catch_all(request: Request, path: str):
             max_inspect_bytes=settings.max_body_inspect_bytes,
         )
 
-        # 2. Rule Check & ML Score
+        # 2. Rule Check & ML Score (ML score executed in threadpool to guarantee non-blocking event loop)
         rule_res = rule_check(norm)
-        ml_res = ml_score(norm)
+        ml_res = await asyncio.to_thread(ml_score, norm)
 
         # 3. Decision
         verdict = decide(
             rule=rule_res,
             ml=ml_res,
-            mode=settings.waf_mode,
-            threshold=settings.ml_threshold,
+            mode=curr_mode,
+            threshold=curr_threshold,
             norm=norm,
         )
     except Exception as inspect_err:
@@ -240,6 +291,7 @@ async def proxy_catch_all(request: Request, path: str):
             rule_hit=None,
             ml_score=0.0,
             explanation={"error": str(inspect_err), "fail_mode": "open"},
+            model_version=getattr(detector, "model_version", "none"),
         )
 
     latency_ms = (time.perf_counter() - start_time) * 1000.0
@@ -263,6 +315,7 @@ async def proxy_catch_all(request: Request, path: str):
         "attack_type": verdict.attack_type,
         "latency_ms": round(latency_ms, 2),
         "explanation": verdict.explanation,
+        "model_version": verdict.model_version,
     }
 
     try:

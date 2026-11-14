@@ -82,7 +82,8 @@
     ],
     "summary": "SQL injection detected via signature SQLI_TAUTOLOGY_01"
   },
-  "feedback": null
+  "feedback": null,
+  "model_version": "20261114_195540"
 }
 ```
 
