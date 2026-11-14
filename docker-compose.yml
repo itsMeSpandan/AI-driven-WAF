@@ -1,0 +1,117 @@
+services:
+  # Protected Vulnerable Target: OWASP Juice Shop
+  # Internal only - not published to host by default, accessible only through the WAF Gateway
+  demo-app:
+    image: bkimminich/juice-shop:v17.1.1
+    container_name: waf-demo-app
+    restart: unless-stopped
+    networks:
+      - waf-network
+    # Optional debug port exposure when running with `--profile debug`
+    profiles:
+      - default
+      - debug
+    ports:
+      - "127.0.0.1:3001:3000" # Active only under debug profile
+
+  # WAF Gateway: Reverse Proxy & L7 Inspection Engine
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: waf-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      - UPSTREAM_URL=http://demo-app:3000
+      - WAF_MODE=${WAF_MODE:-block}
+      - ML_THRESHOLD=${ML_THRESHOLD:-0.75}
+      - DB_URL=sqlite:////data/waf.db
+      - MAX_BODY_INSPECT_BYTES=${MAX_BODY_INSPECT_BYTES:-16384}
+      - FAIL_MODE=${FAIL_MODE:-closed}
+    volumes:
+      - waf-storage:/data
+    depends_on:
+      demo-app:
+        condition: service_started
+    networks:
+      - waf-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8080/healthz\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Dashboard API: Analytics REST API & SSE Live Event Stream
+  dashboard-api:
+    build:
+      context: .
+      dockerfile: dashboard/api/Dockerfile
+    container_name: waf-dashboard-api
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_API_PORT:-8000}:8000"
+    environment:
+      - DB_URL=sqlite:////data/waf.db
+      - WAF_MODE=${WAF_MODE:-block}
+      - ML_THRESHOLD=${ML_THRESHOLD:-0.75}
+    volumes:
+      - waf-storage:/data
+    networks:
+      - waf-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/healthz\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Dashboard UI: Next.js Real-Time SecOps Interface
+  dashboard-ui:
+    build:
+      context: ./dashboard/ui
+      dockerfile: Dockerfile
+    container_name: waf-dashboard-ui
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_UI_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://localhost:8000
+    depends_on:
+      dashboard-api:
+        condition: service_started
+    networks:
+      - waf-network
+
+  # ============================================================================
+  # Optional Production Database (PostgreSQL) - Uncomment to switch from SQLite
+  # ============================================================================
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: waf-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: waf
+  #     POSTGRES_USER: waf
+  #     POSTGRES_PASSWORD: wafpassword
+  #   volumes:
+  #     - pg-data:/var/lib/postgresql/data
+  #   networks:
+  #     - waf-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U waf -d waf"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+
+networks:
+  waf-network:
+    name: waf-internal-net
+    driver: bridge
+
+volumes:
+  waf-storage:
+    name: waf-data-vol
+  # pg-data:

