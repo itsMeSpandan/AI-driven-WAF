@@ -426,7 +426,7 @@ async def proxy_catch_all(request: Request, path: str):
     # 6. Forwarding: Stream to upstream
     fwd_headers = {}
     for k, v in request.headers.items():
-        if k.lower() not in HOP_BY_HOP_HEADERS:
+        if k.lower() not in HOP_BY_HOP_HEADERS and k.lower() != "accept-encoding":
             fwd_headers[k] = v
 
     fwd_headers["x-forwarded-for"] = client_ip
@@ -460,7 +460,7 @@ async def proxy_catch_all(request: Request, path: str):
 
         resp_headers = {}
         for hk, hv in upstream_resp.headers.items():
-            if hk.lower() not in HOP_BY_HOP_HEADERS and hk.lower() != "content-length":
+            if hk.lower() not in HOP_BY_HOP_HEADERS and hk.lower() not in ("content-length", "content-encoding"):
                 resp_headers[hk] = hv
 
         resp_headers["x-waf-request-id"] = request_id
