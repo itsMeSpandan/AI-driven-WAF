@@ -26,7 +26,13 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from gateway.config import settings
 from gateway.detector import detector
-from gateway.masking import mask_body_summary, mask_query_string
+from gateway.masking import (
+    mask_body_summary,
+    mask_canonical_text,
+    mask_explanation,
+    mask_patterns_in_text,
+    mask_query_string,
+)
 from gateway.models import Event, get_engine, init_db
 from gateway.normalizer import normalise_request
 from gateway.pipeline import decide, ml_score, rule_check
@@ -301,10 +307,10 @@ async def proxy_catch_all(request: Request, path: str):
             "id": request_id,
             "client_ip": client_ip,
             "method": request.method,
-            "path": f"/{path}",
+            "path": mask_patterns_in_text(f"/{path}"),
             "query_summary": mask_query_string(raw_query),
             "body_summary": "",
-            "user_agent": user_agent,
+            "user_agent": mask_patterns_in_text(user_agent),
             "rule_hit": "RATE_BURST_EXCEEDED",
             "ml_score": 1.0,
             "verdict": "block",
@@ -380,21 +386,22 @@ async def proxy_catch_all(request: Request, path: str):
     masked_query = mask_query_string(raw_query)
     body_snippet = raw_body[: settings.max_body_inspect_bytes].decode("utf-8", errors="replace")
     masked_body = mask_body_summary(body_snippet)
+    masked_explanation = mask_explanation(verdict.explanation)
 
     event_payload = {
         "id": request_id,
         "client_ip": client_ip,
         "method": request.method,
-        "path": f"/{path}",
+        "path": mask_patterns_in_text(f"/{path}"),
         "query_summary": masked_query,
         "body_summary": masked_body,
-        "user_agent": user_agent,
+        "user_agent": mask_patterns_in_text(user_agent),
         "rule_hit": verdict.rule_hit,
         "ml_score": float(verdict.ml_score),
         "verdict": verdict.action,
         "attack_type": verdict.attack_type,
         "latency_ms": round(latency_ms, 2),
-        "explanation": verdict.explanation,
+        "explanation": masked_explanation,
         "model_version": verdict.model_version,
         "anomaly_flag": rate_res.anomaly_flag,
     }

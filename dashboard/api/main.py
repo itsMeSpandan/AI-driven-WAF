@@ -5,6 +5,7 @@ Implements TRD 2.6 and Stage 1 Task 4 endpoints.
 
 from contextlib import asynccontextmanager
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -13,8 +14,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse, Response
 
 from dashboard.api.routes.auth import router as auth_router
 from dashboard.api.routes.config import router as config_router
@@ -45,12 +48,47 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Enable CORS for Next.js dashboard UI
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response: Response = await call_next(request)
+        except Exception as exc:
+            logger.error("Unhandled API error on %s: %s", request.url.path, exc)
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Internal server error", "detail": "An unexpected error occurred."},
+            )
+
+        # Apply defense-in-depth security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled API exception on %s: %s", request.url.path, exc)
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "detail": "An unexpected error occurred."},
+    )
+
+
+# Enable CORS for Next.js dashboard UI with origin whitelist
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins if allowed_origins else ["http://localhost:3000"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

@@ -22,6 +22,7 @@ from dashboard.api.schemas import (
     FeedbackRequest,
     FeedbackResponse,
 )
+from gateway.masking import mask_canonical_text, mask_patterns_in_text
 from gateway.models import Event, Feedback, get_db
 
 router = APIRouter(prefix="/api/events", tags=["events"])
@@ -147,9 +148,9 @@ def submit_feedback(
         event_id=event_id,
         analyst=admin.get("sub", "admin"),
         label=payload.feedback,
-        notes=payload.notes,
+        notes=mask_patterns_in_text(payload.notes or ""),
         model_version=getattr(event, "model_version", "none"),
-        canonical_text=canonical_text,
+        canonical_text=mask_canonical_text(canonical_text),
     )
     db.add(feedback_record)
     db.commit()

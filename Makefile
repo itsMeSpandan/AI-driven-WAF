@@ -1,4 +1,4 @@
-.PHONY: help up down logs test lint demo openapi seed clean data train retrain-feedback promote-model rollback-model eval eval-quick
+.PHONY: help up down logs test lint demo demo-reset openapi seed clean data train retrain-feedback promote-model rollback-model eval eval-quick
 
 help:
 	@echo "AI-Driven WAF & Analytics Dashboard"
@@ -9,6 +9,7 @@ help:
 	@echo "  make test             - Run python unit & contract tests across components"
 	@echo "  make lint             - Run code quality linters (ruff / flake8 / black)"
 	@echo "  make demo             - Run attack simulator against the running local demo app"
+	@echo "  make demo-reset       - Restore clean seeded state (< 5 sec) for presentations"
 	@echo "  make openapi          - Export the OpenAPI JSON schema to docs/openapi.json"
 	@echo "  make seed             - Seed the database with synthetic telemetry"
 	@echo "  make data             - Download raw corpora and prepare processed splits"
@@ -66,6 +67,9 @@ lint:
 
 demo:
 	python demo/attack_simulator.py --target http://localhost:8080 --count 20
+
+demo-reset:
+	python scripts/demo_reset.py
 
 openapi:
 	python -c "import json; from dashboard.api.main import app; open('docs/openapi.json', 'w').write(json.dumps(app.openapi(), indent=2))"

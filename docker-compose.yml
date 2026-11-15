@@ -7,9 +7,9 @@ services:
     restart: unless-stopped
     networks:
       - waf-network
-    # Optional debug port exposure
-    ports:
-      - "127.0.0.1:3001:3000"
+    # Internal network only; accessible exclusively through the WAF Gateway
+    expose:
+      - "3000"
 
   # WAF Gateway: Reverse Proxy & L7 Inspection Engine
   gateway:

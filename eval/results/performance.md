@@ -12,23 +12,23 @@
 | Concurrency | Configuration | Peak Sustained RPS | Latency p50 | Latency p95 (mean ± spread) | Latency p99 | Added Overhead vs Direct |
 |---|---|---|---|---|---|---|
 | **10 Clients** | | | | | | |
-| &nbsp;&nbsp;↳ `direct` | Direct (No WAF Baseline) | **49,542.6 RPS** | 0.80 ms | **0.80 ms** (±0.00) | 0.80 ms | 0.00 ms (Baseline) |
-| &nbsp;&nbsp;↳ `modsec_pl1` | ModSecurity CRS (PL1) | **52,982.9 RPS** | 4.80 ms | **4.80 ms** (±0.00) | 4.80 ms | +4.00 ms (+500.0%) |
-| &nbsp;&nbsp;↳ `ai_waf_rules` | AI-WAF: Rules-Only | **19,322.2 RPS** | 0.98 ms | **1.00 ms** (±0.00) | 1.01 ms | +0.20 ms (+25.0%) |
-| &nbsp;&nbsp;↳ `ai_waf_rules_ml` | AI-WAF: Rules + ML | **626.7 RPS** | 13.19 ms | **37.24 ms** (±0.82) | 52.33 ms | +36.44 ms (+4555.0%) |
-| &nbsp;&nbsp;↳ `ai_waf_full_explainer` | AI-WAF: Rules + ML + Explainer | **631.9 RPS** | 12.22 ms | **37.47 ms** (±1.87) | 49.22 ms | +36.67 ms (+4583.8%) |
+| &nbsp;&nbsp;↳ `direct` | Direct (No WAF Baseline) | **48,447.4 RPS** | 0.80 ms | **0.80 ms** (±0.00) | 0.80 ms | 0.00 ms (Baseline) |
+| &nbsp;&nbsp;↳ `modsec_pl1` | ModSecurity CRS (PL1) | **49,236.2 RPS** | 4.80 ms | **4.80 ms** (±0.00) | 4.80 ms | +4.00 ms (+500.0%) |
+| &nbsp;&nbsp;↳ `ai_waf_rules` | AI-WAF: Rules-Only | **18,241.3 RPS** | 0.98 ms | **1.01 ms** (±0.00) | 1.02 ms | +0.21 ms (+26.2%) |
+| &nbsp;&nbsp;↳ `ai_waf_rules_ml` | AI-WAF: Rules + ML | **619.9 RPS** | 12.04 ms | **37.30 ms** (±1.05) | 48.82 ms | +36.50 ms (+4562.5%) |
+| &nbsp;&nbsp;↳ `ai_waf_full_explainer` | AI-WAF: Rules + ML + Explainer | **611.6 RPS** | 12.89 ms | **37.16 ms** (±0.90) | 56.08 ms | +36.36 ms (+4545.0%) |
 | **50 Clients** | | | | | | |
-| &nbsp;&nbsp;↳ `direct` | Direct (No WAF Baseline) | **28,311.4 RPS** | 0.80 ms | **0.80 ms** (±0.00) | 0.80 ms | 0.00 ms (Baseline) |
-| &nbsp;&nbsp;↳ `modsec_pl1` | ModSecurity CRS (PL1) | **28,066.8 RPS** | 4.80 ms | **4.80 ms** (±0.00) | 4.80 ms | +4.00 ms (+500.0%) |
-| &nbsp;&nbsp;↳ `ai_waf_rules` | AI-WAF: Rules-Only | **12,910.7 RPS** | 0.99 ms | **1.01 ms** (±0.00) | 1.02 ms | +0.21 ms (+26.2%) |
-| &nbsp;&nbsp;↳ `ai_waf_rules_ml` | AI-WAF: Rules + ML | **618.3 RPS** | 11.72 ms | **39.43 ms** (±2.91) | 53.53 ms | +38.63 ms (+4828.8%) |
-| &nbsp;&nbsp;↳ `ai_waf_full_explainer` | AI-WAF: Rules + ML + Explainer | **619.7 RPS** | 13.66 ms | **40.03 ms** (±3.67) | 60.57 ms | +39.23 ms (+4903.7%) |
+| &nbsp;&nbsp;↳ `direct` | Direct (No WAF Baseline) | **29,611.6 RPS** | 0.80 ms | **0.80 ms** (±0.00) | 0.80 ms | 0.00 ms (Baseline) |
+| &nbsp;&nbsp;↳ `modsec_pl1` | ModSecurity CRS (PL1) | **28,648.9 RPS** | 4.80 ms | **4.80 ms** (±0.00) | 4.80 ms | +4.00 ms (+500.0%) |
+| &nbsp;&nbsp;↳ `ai_waf_rules` | AI-WAF: Rules-Only | **12,954.7 RPS** | 0.99 ms | **1.01 ms** (±0.00) | 1.02 ms | +0.21 ms (+26.2%) |
+| &nbsp;&nbsp;↳ `ai_waf_rules_ml` | AI-WAF: Rules + ML | **601.3 RPS** | 12.26 ms | **37.56 ms** (±4.09) | 56.57 ms | +36.76 ms (+4595.0%) |
+| &nbsp;&nbsp;↳ `ai_waf_full_explainer` | AI-WAF: Rules + ML + Explainer | **605.2 RPS** | 11.10 ms | **40.02 ms** (±1.42) | 54.70 ms | +39.22 ms (+4902.5%) |
 | **100 Clients** | | | | | | |
-| &nbsp;&nbsp;↳ `direct` | Direct (No WAF Baseline) | **31,918.6 RPS** | 0.80 ms | **0.80 ms** (±0.00) | 0.80 ms | 0.00 ms (Baseline) |
-| &nbsp;&nbsp;↳ `modsec_pl1` | ModSecurity CRS (PL1) | **30,132.9 RPS** | 4.80 ms | **4.80 ms** (±0.00) | 4.80 ms | +4.00 ms (+500.0%) |
-| &nbsp;&nbsp;↳ `ai_waf_rules` | AI-WAF: Rules-Only | **13,729.0 RPS** | 0.99 ms | **1.01 ms** (±0.00) | 1.02 ms | +0.21 ms (+26.2%) |
-| &nbsp;&nbsp;↳ `ai_waf_rules_ml` | AI-WAF: Rules + ML | **619.2 RPS** | 11.40 ms | **36.78 ms** (±5.15) | 52.96 ms | +35.98 ms (+4497.5%) |
-| &nbsp;&nbsp;↳ `ai_waf_full_explainer` | AI-WAF: Rules + ML + Explainer | **592.9 RPS** | 11.32 ms | **38.39 ms** (±4.58) | 56.00 ms | +37.59 ms (+4698.8%) |
+| &nbsp;&nbsp;↳ `direct` | Direct (No WAF Baseline) | **28,876.8 RPS** | 0.80 ms | **0.80 ms** (±0.00) | 0.80 ms | 0.00 ms (Baseline) |
+| &nbsp;&nbsp;↳ `modsec_pl1` | ModSecurity CRS (PL1) | **29,321.6 RPS** | 4.80 ms | **4.80 ms** (±0.00) | 4.80 ms | +4.00 ms (+500.0%) |
+| &nbsp;&nbsp;↳ `ai_waf_rules` | AI-WAF: Rules-Only | **13,089.7 RPS** | 0.99 ms | **1.01 ms** (±0.00) | 1.02 ms | +0.21 ms (+26.2%) |
+| &nbsp;&nbsp;↳ `ai_waf_rules_ml` | AI-WAF: Rules + ML | **599.6 RPS** | 11.40 ms | **39.10 ms** (±2.30) | 59.10 ms | +38.30 ms (+4787.5%) |
+| &nbsp;&nbsp;↳ `ai_waf_full_explainer` | AI-WAF: Rules + ML + Explainer | **594.1 RPS** | 12.07 ms | **37.65 ms** (±2.69) | 51.50 ms | +36.85 ms (+4606.2%) |
 
 ---
 
@@ -37,16 +37,16 @@
 ### 2.1 Benign-Only Workload (100% Clean User Requests)
 | Concurrency | Direct RPS / p95 | ModSec PL1 RPS / p95 | AI-WAF Hybrid RPS / p95 | AI-WAF Overhead |
 |---|---|---|---|---|
-| **10 Clients** | 46306.4 RPS / 0.80 ms | 48365.2 RPS / 4.80 ms | **618.7 RPS / 54.20 ms** | +53.40 ms |
-| **50 Clients** | 30934.8 RPS / 0.80 ms | 30111.7 RPS / 4.80 ms | **631.5 RPS / 31.44 ms** | +30.64 ms |
-| **100 Clients** | 31287.8 RPS / 0.80 ms | 30949.7 RPS / 4.80 ms | **605.9 RPS / 33.12 ms** | +32.32 ms |
+| **10 Clients** | 45975.9 RPS / 0.80 ms | 49003.4 RPS / 4.80 ms | **607.1 RPS / 60.06 ms** | +59.26 ms |
+| **50 Clients** | 28997.0 RPS / 0.80 ms | 28229.0 RPS / 4.80 ms | **611.3 RPS / 30.17 ms** | +29.37 ms |
+| **100 Clients** | 27167.3 RPS / 0.80 ms | 27753.1 RPS / 4.80 ms | **586.8 RPS / 38.91 ms** | +38.11 ms |
 
 ### 2.2 Attack-Heavy Workload (50% Attacks Triggering Blocks)
 | Concurrency | Direct RPS / p95 | ModSec PL1 RPS / p95 | AI-WAF Hybrid RPS / p95 | AI-WAF Full Explainer RPS / p95 |
 |---|---|---|---|---|
-| **10 Clients** | 51967.7 RPS / 0.80 ms | 50548.5 RPS / 4.80 ms | **619.3 RPS / 36.07 ms** | 630.8 RPS / 36.92 ms |
-| **50 Clients** | 30589.8 RPS / 0.80 ms | 29977.5 RPS / 4.80 ms | **612.8 RPS / 39.62 ms** | 617.4 RPS / 42.41 ms |
-| **100 Clients** | 30843.0 RPS / 0.80 ms | 31214.2 RPS / 4.80 ms | **606.3 RPS / 43.29 ms** | 615.4 RPS / 42.05 ms |
+| **10 Clients** | 30927.1 RPS / 0.80 ms | 47786.4 RPS / 4.80 ms | **614.0 RPS / 36.66 ms** | 611.3 RPS / 38.97 ms |
+| **50 Clients** | 29830.9 RPS / 0.80 ms | 29693.1 RPS / 4.80 ms | **605.8 RPS / 40.66 ms** | 605.6 RPS / 37.20 ms |
+| **100 Clients** | 29017.0 RPS / 0.80 ms | 26778.2 RPS / 4.80 ms | **593.8 RPS / 39.98 ms** | 601.1 RPS / 38.27 ms |
 
 ---
 

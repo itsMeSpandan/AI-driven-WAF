@@ -11,7 +11,8 @@ PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
 
 @pytest.fixture(scope="module")
 def datasets():
-    assert (PROCESSED_DIR / "train.csv").exists(), "Processed datasets missing! Run ml/prepare.py first."
+    if not (PROCESSED_DIR / "train.csv").exists():
+        pytest.skip("Processed datasets missing! Run 'make data' first.")
     train_df = pd.read_csv(PROCESSED_DIR / "train.csv")
     val_df = pd.read_csv(PROCESSED_DIR / "val.csv")
     test_df = pd.read_csv(PROCESSED_DIR / "test.csv")

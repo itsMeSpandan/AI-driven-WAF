@@ -13,7 +13,7 @@
 | 3. Robustness & Explainability | A, B, C | ✅ Done | Weeks 3–4 | Deterministic evasion mutations (Family A/B), augmented retraining, cross-source eval, cached linear explainer, safe token drawer |
 | 4. Dashboard Completion & Controls | C, B, A | ✅ Done | Week 5 | Config API + audit trail, rate limiter + burst flags, feedback loop + safety gates, auth, error analysis, scope freeze |
 | 5. Evaluation & Benchmarking | A, B, C | ✅ Done | Week 6 | ModSecurity+CRS baseline, 7 replay corpora, p95 benchmarks, Wilson 95% CIs, SHAP validation, results matrix |
-| 6. Hardening, Docs & Demo | All | ⬜ Not started | Weeks 7–8 | Final report, slides, demo video, v1.0 release |
+| 6. Hardening, Docs & Demo | All | ✅ Done | Weeks 7–8 | Production hardening, security audit, architecture docs, academic final report (MD + DOCX), slide outline, demo kit & dry-runs, v1.0 release |
 
 Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 
@@ -84,14 +84,14 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 - [x] `eval/results.md` reproducible with one command (`make eval` and `make eval-quick` wired in `Makefile`) (All)
 
 ## Stage 6 — Hardening, Docs & Demo
-- [ ] Log masking verified
-- [ ] Dashboard output escaping verified
-- [ ] One-command run documented
-- [ ] Architecture diagram finalised
-- [ ] Final report written
-- [ ] Slides prepared
-- [ ] Two full demo dry-runs
-- [ ] Release `v1.0` tagged
+- [x] Log masking verified (Luhn credit cards, JWTs, Bearers, Canaries)
+- [x] Dashboard output escaping verified (AST audit 0 dangerouslySetInnerHTML, SecurityHeaders CSP)
+- [x] One-command run documented (`make up && make demo-reset`)
+- [x] Architecture diagram finalised (`docs/diagrams/*.png`, `docs/ARCHITECTURE.md`)
+- [x] Final report written (`docs/FINAL_REPORT.md` & `docs/FINAL_REPORT.docx`)
+- [x] Slides prepared (`docs/SLIDES.md`)
+- [x] Two full demo dry-runs (`docs/demo_dryrun.py` -> `docs/DEMO_DRYRUN.md`)
+- [x] Release `v1.0` tagged (locally tagged)
 
 ## Metrics Log (fill as you measure)
 
@@ -133,10 +133,15 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 | 2026-11-15 | 7 frozen replay corpora generated with strict zero-leakage hash verification | Disjoint evaluation sets across In-Distribution, Family B Evasions, Neutral attacks, and Large Benign queries. |
 | 2026-11-15 | Wilson 95% Confidence Intervals for all benchmark proportions | Replaced asymptotic normal approximations with Wilson score intervals to prevent collapsing bounds at $p=0.00\%$ and $p=100.0\%$. |
 | 2026-11-15 | Linear Attribution vs SHAP validation study (`eval/shap_analysis.py`) | Proved theoretical equivalence ($\phi_i(x) \approx w_i x_i$) under sparse n-grams, validating 80.0% feature alignment in < 1 ms. |
+| 2026-11-15 | ISO/IEC 7812 Luhn checksum validator for credit card scrubbing (`gateway/masking.py`) | Replaces valid credit cards with `[REDACTED_CC]` while preserving innocent numeric parameters. |
+| 2026-11-15 | Pre-storage canonical text and explanation sanitization | Eliminates secret leakage sink where unmasked query/body strings leaked via `canonical_text` in explanation drawers. |
+| 2026-11-15 | SecurityHeadersMiddleware & generic 500 handler (`dashboard/api/main.py`) | Enforces CSP `frame-ancestors 'none'`, nosniff, DENY, and strips Python stack traces from API 500 error responses. |
+| 2026-11-15 | Track `ml/models/model.joblib` (2.00 MB) directly in git | Allows clean clone out-of-the-box evaluation without requiring initial 5-minute training invocation. |
+| 2026-11-15 | Automated Word DOCX generation via `python-docx` (`docs/export_docx.py`) | Exports `docs/FINAL_REPORT.docx` (641 KB) preserving all tables, formatted typography, and embedded figures for academic grading. |
 
 ## Blockers / Risks Open
 
 | Date | Issue | Owner | Status |
 |---|---|---|---|
 | 2026-11-15 | SecLists + CSIC 2010 datasets download and preprocessing | A | ✅ Resolved (ingested, canonicalized, split into `train.csv`, `val.csv`, `test.csv`, `cross_source_test.csv`) |
-| 2026-11-15 | Cross-source generalization gap on Spanish CSIC anomalous parameter tampering (6.01% recall) | A | Open literature gap documented in `ml/reports/cross_source.md` (form tampering vs syntax injection; targeted for Stage 4/5 analysis). |
+| 2026-11-15 | Cross-source generalization gap on Spanish CSIC anomalous parameter tampering (6.01% recall) | A | ✅ Analyzed & Documented in Final Report Section 10; hybrid rules provide essential 20.29% safety net. |

@@ -89,6 +89,9 @@ def test_poisoning_defense_rejects_rule_conflict():
 
 def test_frozen_datasets_hashes_remain_intact():
     """Verify that none of the frozen evaluation sets are modified."""
+    if not (DATA_DIR / "test.csv").exists():
+        pytest.skip("Processed test datasets missing! Run 'make data' first.")
+
     frozen_files = [
         DATA_DIR / "test.csv",
         DATA_DIR / "evasion_test.csv",

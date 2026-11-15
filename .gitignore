@@ -59,6 +59,7 @@ ml/data/processed/*
 *.joblib
 !ml/models/.gitkeep
 !ml/models/placeholder.joblib
+!ml/models/model.joblib
 
 # OS & Editor
 .DS_Store

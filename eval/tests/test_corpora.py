@@ -59,6 +59,9 @@ def test_corpora_schema_conformance():
 
 def test_anti_leakage_strict_zero_overlap():
     """Verify zero overlap between active training set and test/evasion corpora."""
+    if not (PROCESSED_DATA_DIR / "train_augmented.csv").exists():
+        pytest.skip("train_augmented.csv missing (run 'make data' to regenerate)")
+
     train_aug = pd.read_csv(PROCESSED_DATA_DIR / "train_augmented.csv")
     train_texts = set(train_aug["text"].dropna().astype(str))
 

@@ -15,6 +15,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from gateway.detector import MLResult, detector
+from gateway.masking import mask_canonical_text
 from gateway.normalizer import NormalisedRequest
 from gateway.rules import RULES
 
@@ -248,7 +249,7 @@ def explain_request(
             "matched_rule_detail": matched_rule_info,
             "top_tokens": top_tokens,
             "features": features,
-            "canonical_text": canonical_text,
+            "canonical_text": mask_canonical_text(canonical_text),
         }
 
     except Exception as exc:
@@ -260,5 +261,5 @@ def explain_request(
             "matched_rule_detail": {"id": rule.rule_id} if rule.hit else None,
             "top_tokens": [],
             "features": [],
-            "canonical_text": norm.canonical_text if norm else "",
+            "canonical_text": mask_canonical_text(norm.canonical_text) if norm else "",
         }

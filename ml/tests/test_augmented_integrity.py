@@ -16,6 +16,8 @@ PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
 
 @pytest.fixture(scope="module")
 def datasets():
+    if not (PROCESSED_DIR / "train_augmented.csv").exists():
+        pytest.skip("Augmented datasets missing! Run 'make data' first.")
     return {
         "train_aug": pd.read_csv(PROCESSED_DIR / "train_augmented.csv"),
         "val": pd.read_csv(PROCESSED_DIR / "val.csv"),
