@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2026-11-15
 
+### UI Revamp — "Monolith" Light Theme
+- Restyled dashboard UI to high-contrast, black-and-grey, zero-radius "Monolith" specification:
+  - Designed monochrome navigation bar, 5 KPI tiles with inverted Blocked tile, and sharp panel borders.
+  - Replaced donut chart with a 100% stacked horizontal attack breakdown bar.
+  - Implemented IBM Plex Sans and IBM Plex Mono typography loaded via `next/font`.
+  - Authored `docs/UI_STYLE_GUIDE.md` defining design tokens and strict chart palette mappings.
+
 ### Stage 6 — Hardening, Docs & Demo (Release v1.0)
 #### Added
 - **Production Masking & Redaction**:

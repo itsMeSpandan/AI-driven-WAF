@@ -104,9 +104,9 @@ BLOCK_HTML_TEMPLATE = """<!DOCTYPE html>
   <title>403 Forbidden - Request Blocked</title>
   <style>
     body {{
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f172a;
-      color: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #e9e9e6;
+      color: #111111;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -114,36 +114,51 @@ BLOCK_HTML_TEMPLATE = """<!DOCTYPE html>
       margin: 0;
     }}
     .card {{
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 2.5rem;
+      background: #ffffff;
+      border: 1px solid #111111;
+      border-radius: 0;
+      padding: 0;
       max-width: 480px;
-      text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      box-shadow: none;
     }}
-    h1 {{ color: #f43f5e; margin: 0 0 1rem 0; font-size: 1.75rem; }}
-    p {{ color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }}
+    .header {{
+      background: #111111;
+      color: #ffffff;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }}
+    .content {{
+      padding: 1.5rem 1.25rem;
+    }}
+    h1 {{ color: #111111; margin: 0 0 0.75rem 0; font-size: 1.25rem; font-weight: 600; }}
+    p {{ color: #555555; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.25rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
     .id-badge {{
-      background: #0f172a;
-      border: 1px dashed #475569;
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
+      background: #f4f4f2;
+      border: 1px solid #111111;
+      border-radius: 0;
+      padding: 0.6rem 0.8rem;
       font-family: ui-monospace, SFMono-Regular, monospace;
-      color: #38bdf8;
-      font-size: 0.875rem;
+      color: #111111;
+      font-size: 0.8rem;
       word-break: break-all;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }}
-    .footer {{ font-size: 0.8rem; color: #64748b; }}
+    .footer {{ font-size: 0.75rem; color: #555555; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>403 Forbidden</h1>
-    <p>This request was blocked by the AI-Driven Web Application Firewall (WAF) because it violated active security policy rules.</p>
-    <div class="id-badge">Request ID: {request_id}</div>
-    <div class="footer">If you believe this is a false positive, please share this Request ID with your security administrator.</div>
+    <div class="header">WAF / SECURITY ENFORCEMENT</div>
+    <div class="content">
+      <h1>403 Forbidden</h1>
+      <p>This request was blocked by the Web Application Firewall (WAF) because it violated active security policy rules.</p>
+      <div class="id-badge">Request ID: {request_id}</div>
+      <div class="footer">If you believe this is a false positive, please share this Request ID with your security administrator.</div>
+    </div>
   </div>
 </body>
 </html>
