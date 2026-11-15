@@ -1,19 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  X,
-  ShieldAlert,
-  CheckCircle,
-  ThumbsDown,
-  ThumbsUp,
-  ChevronDown,
-  ChevronRight,
-  Flame,
-  Activity,
-  Code2,
-} from "lucide-react";
+import { X, ChevronDown, ChevronRight } from "lucide-react";
 import { EventItem, ExplanationToken, submitFeedback } from "@/lib/api";
+import { VerdictText } from "@/components/monolith/ui";
 
 interface RequestDetailDrawerProps {
   event: EventItem | null;
@@ -25,13 +15,15 @@ interface RequestDetailDrawerProps {
  * Safely renders canonical text with highlighted token spans.
  * Strictly guarantees ZERO usage of dangerouslySetInnerHTML.
  * All substrings are rendered as standard React text nodes.
+ * Monolith spec: Top tokens rendered as <mark> with black bg and white text;
+ * lower-weight tokens with a 2px black underline.
  */
 function renderHighlightedCanonicalText(
   canonicalText: string,
   tokens: ExplanationToken[]
 ) {
   if (!canonicalText) {
-    return <span className="text-slate-500 italic">No inspected payload text available</span>;
+    return <span className="text-muted italic">No inspected payload text available</span>;
   }
 
   // Filter valid spans that have character start and end bounds
@@ -47,7 +39,7 @@ function renderHighlightedCanonicalText(
     .sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
 
   if (validSpans.length === 0) {
-    return <span className="text-slate-300">{canonicalText}</span>;
+    return <span className="text-ink">{canonicalText}</span>;
   }
 
   const nodes: React.ReactNode[] = [];
@@ -61,22 +53,35 @@ function renderHighlightedCanonicalText(
     // Preceding unhighlighted segment
     if (s > cursor) {
       nodes.push(
-        <span key={`txt-${idx}`} className="text-slate-300">
+        <span key={`txt-${idx}`} className="text-ink">
           {canonicalText.substring(cursor, s)}
         </span>
       );
     }
 
-    // Highlighted malicious token span
-    nodes.push(
-      <mark
-        key={`tok-${idx}`}
-        className="bg-rose-500/30 text-rose-200 border-b-2 border-rose-400 font-bold px-1 rounded-sm cursor-help hover:bg-rose-500/50 transition-colors"
-        title={`Attribution weight: +${span.weight.toFixed(4)}`}
-      >
-        {canonicalText.substring(s, e)}
-      </mark>
-    );
+    // Monolith Token Highlight:
+    // Top tokens (or index 0) black bg with white text; secondary with 2px underline
+    if (idx === 0 || span.weight >= 0.5) {
+      nodes.push(
+        <mark
+          key={`tok-${idx}`}
+          className="bg-ink text-white font-mono font-medium px-1 py-0.5 cursor-help"
+          title={`Attribution weight: +${span.weight.toFixed(4)}`}
+        >
+          {canonicalText.substring(s, e)}
+        </mark>
+      );
+    } else {
+      nodes.push(
+        <span
+          key={`tok-${idx}`}
+          className="border-b-2 border-ink font-mono font-medium text-ink cursor-help"
+          title={`Attribution weight: +${span.weight.toFixed(4)}`}
+        >
+          {canonicalText.substring(s, e)}
+        </span>
+      );
+    }
 
     cursor = e;
   });
@@ -84,7 +89,7 @@ function renderHighlightedCanonicalText(
   // Trailing unhighlighted segment
   if (cursor < canonicalText.length) {
     nodes.push(
-      <span key="txt-end" className="text-slate-300">
+      <span key="txt-end" className="text-ink">
         {canonicalText.substring(cursor)}
       </span>
     );
@@ -121,319 +126,292 @@ export function RequestDetailDrawer({
   const features = event.explanation?.features || [];
   const ruleDetail = event.explanation?.matched_rule_detail;
 
-  // Use the canonical text from the explanation or fallback to reconstructed method + path + query
   const canonicalDisplay =
     event.explanation?.canonical_text ||
     `${event.method} ${event.path}${event.query_summary ? "?" + event.query_summary : ""}`;
 
-  // Find max weight for proportional bar indicators
   const maxWeight = Math.max(...tokens.map((t) => t.weight || 0.1), 0.5);
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
-      <div className="w-full max-w-xl bg-slate-900 border-l border-slate-800 p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
-        <div className="space-y-5">
-          {/* Header */}
-          <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+    <div
+      className="fixed inset-0 z-50 flex justify-end"
+      style={{ backgroundColor: "rgba(17, 17, 17, 0.45)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-xl bg-panel border-l border-ink text-ink flex flex-col justify-between overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div>
+          {/* Header Strip */}
+          <div className="bg-ink text-white px-5 py-3.5 flex items-center justify-between border-b border-ink on-dark">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-sky-400">{event.id}</span>
-                {event.feedback && (
-                  <span
-                    className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${
-                      event.feedback === "fp"
-                        ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                        : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                    }`}
-                  >
-                    Feedback: {event.feedback}
-                  </span>
-                )}
+              <div className="font-mono text-[11px] uppercase tracking-[0.06em] text-on-dark-muted">
+                EVENT ID: {event.id}
               </div>
-              <h2 className="text-lg font-bold text-white mt-1">
-                Inspection & Diagnostic Explanation
+              <h2 className="text-sm font-semibold text-white mt-0.5">
+                REQUEST DIAGNOSTICS & EXPLANATION
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              className="text-on-dark-muted hover:text-white p-1 transition-colors"
+              aria-label="Close request drawer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-              <span className="text-[11px] text-slate-400">Verdict</span>
-              <div
-                className={`text-sm font-bold uppercase mt-0.5 ${
-                  event.verdict === "block"
-                    ? "text-rose-400"
-                    : event.verdict === "flag"
-                    ? "text-amber-400"
-                    : "text-emerald-400"
-                }`}
-              >
-                {event.verdict}
+          <div className="p-5 space-y-4">
+            {/* Quick Metrics (3 tiles) */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="border border-ink p-3 bg-panel">
+                <span className="font-mono text-[10px] text-muted uppercase tracking-[0.06em] block">
+                  VERDICT
+                </span>
+                <div className="mt-1">
+                  <VerdictText verdict={event.verdict} />
+                </div>
+              </div>
+              <div className="border border-ink p-3 bg-panel">
+                <span className="font-mono text-[10px] text-muted uppercase tracking-[0.06em] block">
+                  ML THREAT SCORE
+                </span>
+                <div className="font-mono text-[15px] font-bold text-ink mt-0.5">
+                  {event.ml_score.toFixed(4)}
+                </div>
+              </div>
+              <div className="border border-ink p-3 bg-panel">
+                <span className="font-mono text-[10px] text-muted uppercase tracking-[0.06em] block">
+                  LATENCY
+                </span>
+                <div className="font-mono text-[15px] font-bold text-ink mt-0.5">
+                  {event.latency_ms} ms
+                </div>
               </div>
             </div>
-            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-              <span className="text-[11px] text-slate-400">ML Threat Score</span>
-              <div className="text-sm font-bold mt-0.5 text-sky-400">
-                {event.ml_score.toFixed(4)}
-              </div>
-            </div>
-            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-              <span className="text-[11px] text-slate-400">Latency</span>
-              <div className="text-sm font-bold mt-0.5 text-indigo-400">
-                {event.latency_ms} ms
-              </div>
-            </div>
-          </div>
 
-          {/* Diagnostic Summary Banner */}
-          {event.explanation?.summary && (
-            <div
-              className={`p-3 rounded-lg border text-xs flex items-start gap-2.5 ${
-                event.verdict === "block"
-                  ? "bg-rose-950/30 border-rose-900/60 text-rose-300"
-                  : event.verdict === "flag"
-                  ? "bg-amber-950/30 border-amber-900/60 text-amber-300"
-                  : "bg-emerald-950/30 border-emerald-900/60 text-emerald-300"
-              }`}
-            >
-              <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold block">Decision Diagnostic</span>
+            {/* Diagnostic Summary */}
+            {event.explanation?.summary && (
+              <div className="border border-ink p-3 bg-zebra font-mono text-[12px] text-ink">
+                <span className="font-semibold block uppercase text-[10px] text-muted tracking-[0.06em] mb-1">
+                  DECISION DIAGNOSTIC
+                </span>
                 <span>{event.explanation.summary}</span>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Canonical Payload with Token Highlighting (Stage 3 TRD 2.4) */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5 text-sky-400" />
-                Inspected Canonical Request (Token Highlights)
-              </span>
-              <span className="text-[10px] text-slate-500">Escaped string render</span>
-            </div>
-            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-xs break-all leading-relaxed whitespace-pre-wrap select-text">
-              {renderHighlightedCanonicalText(canonicalDisplay, tokens)}
-            </div>
-          </div>
-
-          {/* Top Contributing Tokens & Bar Indicators */}
-          <div className="space-y-2.5">
-            <span className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-rose-400" />
-              Top Contributing N-Gram Tokens
-            </span>
-            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-3">
-              {tokens.length === 0 ? (
-                <p className="text-slate-500 italic text-xs">
-                  Clean request — no anomalous token attributions.
-                </p>
-              ) : (
-                tokens.slice(0, 3).map((t, idx) => {
-                  const pct = Math.min(
-                    100,
-                    Math.round(((t.weight || 0) / maxWeight) * 100)
-                  );
-                  return (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-mono text-rose-300 bg-rose-950/50 border border-rose-900/60 px-2 py-0.5 rounded text-[11px]">
-                          {t.token || t.text}
-                        </span>
-                        <span className="font-mono text-slate-400 text-[11px]">
-                          +{Number(t.weight).toFixed(4)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-rose-500 to-amber-500 h-1.5 rounded-full transition-all"
-                          style={{ width: `${Math.max(pct, 8)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* Notable Lexical & Statistical Features */}
-          {features.length > 0 && (
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-amber-400" />
-                Structural & Lexical Indicators
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                {features.map((f, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-xs"
-                  >
-                    <div className="text-amber-300 font-medium">{f.note}</div>
-                    <div className="text-slate-500 font-mono text-[10px] mt-0.5">
-                      {f.name}: {f.value}
-                    </div>
-                  </div>
-                ))}
+            {/* Canonical Request (Token Attribution) */}
+            <div className="border border-ink bg-panel">
+              <div className="px-3.5 py-2 border-b border-ink font-mono text-[11px] uppercase tracking-[0.06em] font-semibold text-ink flex items-center justify-between">
+                <span>INSPECTED CANONICAL REQUEST</span>
+                <span className="text-muted text-[10px]">ESCAPED RENDER</span>
+              </div>
+              <div className="p-3 font-mono text-[12px] break-all leading-relaxed whitespace-pre-wrap select-text bg-panel text-ink">
+                {renderHighlightedCanonicalText(canonicalDisplay, tokens)}
               </div>
             </div>
-          )}
 
-          {/* Rule Signature Match Details */}
-          {event.rule_hit && (
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-slate-300">
-                Rule Layer Signature Hit
-              </span>
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-amber-400 font-mono font-bold">
-                    {event.rule_hit}
-                  </span>
-                  <span className="text-slate-400 uppercase text-[10px] bg-slate-800 px-1.5 py-0.5 rounded">
+            {/* Top Contributing Tokens & Bar Indicators */}
+            <div className="border border-ink bg-panel">
+              <div className="px-3.5 py-2 border-b border-ink font-mono text-[11px] uppercase tracking-[0.06em] font-semibold text-ink">
+                TOP CONTRIBUTING N-GRAM TOKENS
+              </div>
+              <div className="p-3 space-y-3">
+                {tokens.length === 0 ? (
+                  <p className="font-mono text-[11px] text-muted">
+                    CLEAN REQUEST &mdash; NO ANOMALOUS TOKEN ATTRIBUTIONS.
+                  </p>
+                ) : (
+                  tokens.slice(0, 3).map((t, idx) => {
+                    const pct = Math.min(
+                      100,
+                      Math.round(((t.weight || 0) / maxWeight) * 100)
+                    );
+                    return (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex justify-between items-center font-mono text-[11px]">
+                          <span className="border border-ink px-1.5 py-0.5 bg-zebra font-semibold text-ink">
+                            {t.token || t.text}
+                          </span>
+                          <span className="text-muted">
+                            +{Number(t.weight).toFixed(4)}
+                          </span>
+                        </div>
+                        {/* Flat ink on hair track */}
+                        <div className="w-full bg-hair h-2 overflow-hidden border border-hair">
+                          <div
+                            className="bg-ink h-full"
+                            style={{ width: `${Math.max(pct, 5)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Structural & Lexical Indicators */}
+            {features.length > 0 && (
+              <div className="border border-ink bg-panel">
+                <div className="px-3.5 py-2 border-b border-ink font-mono text-[11px] uppercase tracking-[0.06em] font-semibold text-ink">
+                  STRUCTURAL &amp; LEXICAL INDICATORS
+                </div>
+                <div className="p-3 grid grid-cols-2 gap-2">
+                  {features.map((f, idx) => (
+                    <div
+                      key={idx}
+                      className="border border-hair p-2 bg-zebra font-mono text-[11px]"
+                    >
+                      <div className="font-semibold text-ink">{f.note}</div>
+                      <div className="text-muted text-[10px] mt-0.5">
+                        {f.name}: {f.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Rule Signature Match Details */}
+            {event.rule_hit && (
+              <div className="border border-ink bg-panel">
+                <div className="px-3.5 py-2 border-b border-ink font-mono text-[11px] uppercase tracking-[0.06em] font-semibold text-ink flex items-center justify-between">
+                  <span>RULE LAYER SIGNATURE HIT</span>
+                  <span className="border border-ink px-1 text-[10px]">
                     {ruleDetail?.category || event.attack_type}
                   </span>
                 </div>
-                {ruleDetail?.description && (
-                  <p className="text-slate-400 text-[11px]">{ruleDetail.description}</p>
-                )}
-                {ruleDetail?.pattern && (
-                  <div className="text-slate-500 font-mono text-[10px] truncate">
-                    Matched: {ruleDetail.pattern}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Collapsible Accordion: Masked Raw Request Details */}
-          <div className="border border-slate-800 rounded-lg overflow-hidden bg-slate-950/60">
-            <button
-              onClick={() => setShowRawAccordion(!showRawAccordion)}
-              className="w-full p-3 flex items-center justify-between text-xs text-slate-300 hover:bg-slate-800/40 transition-colors"
-            >
-              <span className="font-medium">Raw Request Metadata & Sanitized Payloads</span>
-              {showRawAccordion ? (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              )}
-            </button>
-
-            {showRawAccordion && (
-              <div className="p-3 border-t border-slate-800/80 space-y-2 text-xs font-mono">
-                <div>
-                  <span className="text-slate-500 block text-[10px] font-sans">
-                    Endpoint
-                  </span>
-                  <div className="text-slate-300">
-                    <span className="text-sky-400 font-bold mr-2">{event.method}</span>
-                    <span>{event.path}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-slate-500 block text-[10px] font-sans">
-                    Timestamp
-                  </span>
-                  <div className="text-slate-300 text-[11px]">
-                    {event.ts ? (
-                      <>
-                        <span className="text-slate-200 font-sans">
-                          {(() => {
-                            try {
-                              const utcIso =
-                                event.ts.includes("Z") || event.ts.includes("+")
-                                  ? event.ts
-                                  : event.ts.replace(" ", "T") + "Z";
-                              const d = new Date(utcIso);
-                              return isNaN(d.getTime()) ? event.ts : d.toLocaleString();
-                            } catch {
-                              return event.ts;
-                            }
-                          })()}
-                        </span>
-                        <span className="text-slate-500 ml-2 font-mono text-[10px]">
-                          ({event.ts} UTC)
-                        </span>
-                      </>
-                    ) : (
-                      "N/A"
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-slate-500 block text-[10px] font-sans">
-                    Client IP & Agent
-                  </span>
-                  <div className="text-slate-400 text-[11px]">
-                    {event.client_ip} &bull; {event.user_agent || "No User-Agent"}
-                  </div>
-                </div>
-
-                {event.query_summary && (
-                  <div>
-                    <span className="text-slate-500 block text-[10px] font-sans">
-                      Masked Query String
-                    </span>
-                    <div className="bg-slate-900 p-2 rounded text-slate-300 break-all">
-                      {event.query_summary}
+                <div className="p-3 font-mono text-[12px] space-y-1.5">
+                  <div className="font-bold text-ink">{event.rule_hit}</div>
+                  {ruleDetail?.description && (
+                    <p className="text-muted text-[11px]">{ruleDetail.description}</p>
+                  )}
+                  {ruleDetail?.pattern && (
+                    <div className="text-muted text-[10px] break-all border-t border-hair pt-1">
+                      Matched: {ruleDetail.pattern}
                     </div>
-                  </div>
-                )}
-
-                {event.body_summary && (
-                  <div>
-                    <span className="text-slate-500 block text-[10px] font-sans">
-                      Masked Body Summary
-                    </span>
-                    <div className="bg-slate-900 p-2 rounded text-slate-300 break-all whitespace-pre-wrap">
-                      {event.body_summary}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
+
+            {/* Collapsible Accordion: Masked Raw Request Details */}
+            <div className="border border-ink bg-panel">
+              <button
+                onClick={() => setShowRawAccordion(!showRawAccordion)}
+                className="w-full px-3.5 py-2.5 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.06em] font-semibold text-ink hover:bg-hover transition-colors"
+              >
+                <span>RAW REQUEST METADATA &amp; SANITIZED PAYLOADS</span>
+                {showRawAccordion ? (
+                  <ChevronDown className="w-4 h-4 text-ink" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-ink" />
+                )}
+              </button>
+
+              {showRawAccordion && (
+                <div className="p-3 border-t border-ink space-y-2.5 font-mono text-[12px]">
+                  <div>
+                    <span className="text-muted block text-[10px] uppercase">
+                      ENDPOINT
+                    </span>
+                    <div className="text-ink">
+                      <span className="font-bold mr-2">{event.method}</span>
+                      <span>{event.path}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-muted block text-[10px] uppercase">
+                      TIMESTAMP
+                    </span>
+                    <div className="text-ink text-[11px]">
+                      {event.ts ? (
+                        <>
+                          <span>
+                            {(() => {
+                              try {
+                                const utcIso =
+                                  event.ts.includes("Z") || event.ts.includes("+")
+                                    ? event.ts
+                                    : event.ts.replace(" ", "T") + "Z";
+                                const d = new Date(utcIso);
+                                return isNaN(d.getTime()) ? event.ts : d.toLocaleString();
+                              } catch {
+                                return event.ts;
+                              }
+                            })()}
+                          </span>
+                          <span className="text-muted ml-2">({event.ts} UTC)</span>
+                        </>
+                      ) : (
+                        "N/A"
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-muted block text-[10px] uppercase">
+                      CLIENT IP &amp; AGENT
+                    </span>
+                    <div className="text-ink text-[11px]">
+                      {event.client_ip} &bull; {event.user_agent || "No User-Agent"}
+                    </div>
+                  </div>
+
+                  {event.query_summary && (
+                    <div>
+                      <span className="text-muted block text-[10px] uppercase">
+                        MASKED QUERY STRING
+                      </span>
+                      <div className="bg-zebra p-2 border border-hair text-ink break-all">
+                        {event.query_summary}
+                      </div>
+                    </div>
+                  )}
+
+                  {event.body_summary && (
+                    <div>
+                      <span className="text-muted block text-[10px] uppercase">
+                        MASKED BODY SUMMARY
+                      </span>
+                      <div className="bg-zebra p-2 border border-hair text-ink break-all whitespace-pre-wrap">
+                        {event.body_summary}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Action / Feedback Footer */}
-        <div className="pt-4 border-t border-slate-800 mt-6 space-y-3">
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-slate-400 block">
-              Analyst Review Notes (optional)
+        <div className="p-5 border-t border-ink bg-panel space-y-3">
+          <div>
+            <label className="text-[11px] font-mono uppercase text-muted block mb-1">
+              ANALYST REVIEW NOTES (OPTIONAL)
             </label>
             <input
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Legitimate internal API traffic with single quotes in payload"
+              placeholder="e.g. Legitimate internal API traffic with single quotes"
               maxLength={256}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-panel text-ink border border-ink font-mono text-[12px] px-2.5 py-1.5 focus:outline-none"
             />
           </div>
 
           <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="text-[11px] text-slate-500">
+            <div className="font-mono text-[11px] text-muted uppercase">
               {event.feedback ? (
                 <span>
-                  Current Label:{" "}
-                  <strong className="uppercase text-slate-300 font-mono">
-                    {event.feedback}
-                  </strong>
+                  LABEL: <strong className="text-ink">{event.feedback}</strong>
                 </span>
               ) : (
-                <span>Analyst calibration loop</span>
+                <span>CALIBRATION LOOP</span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -442,28 +420,36 @@ export function RequestDetailDrawer({
                   type="button"
                   disabled={submitting}
                   onClick={() => handleFeedback("clear")}
-                  className="px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50"
+                  className="font-mono text-[11px] px-2.5 py-1.5 border border-ink bg-panel text-muted hover:text-ink transition-colors disabled:opacity-50"
                 >
-                  Clear
+                  CLEAR
                 </button>
               )}
+              {/* Secondary button (white/transparent, 1px black border) */}
               <button
                 type="button"
                 disabled={submitting}
                 onClick={() => handleFeedback("fp")}
-                className="px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs font-medium hover:bg-amber-500/20 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                className={`font-mono text-[12px] px-3 py-1.5 border border-ink transition-colors disabled:opacity-50 ${
+                  event.feedback === "fp"
+                    ? "bg-ink text-white"
+                    : "bg-panel text-ink hover:bg-hover"
+                }`}
               >
-                <ThumbsDown className="w-3.5 h-3.5" />
-                Mark FP
+                Mark false positive
               </button>
+              {/* Primary button (black bg, white text) */}
               <button
                 type="button"
                 disabled={submitting}
                 onClick={() => handleFeedback("tp")}
-                className="px-3 py-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-300 text-xs font-medium hover:bg-rose-500/20 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                className={`font-mono text-[12px] px-3 py-1.5 border border-ink transition-colors disabled:opacity-50 ${
+                  event.feedback === "tp"
+                    ? "bg-white text-ink"
+                    : "bg-ink text-white hover:bg-[#262626]"
+                }`}
               >
-                <ThumbsUp className="w-3.5 h-3.5" />
-                Confirm Threat
+                Confirm threat
               </button>
             </div>
           </div>
