@@ -1,0 +1,1022 @@
+{
+  "generated_at": "2026-11-15T05:12:42.704180+00:00",
+  "baseline_image": "owasp/modsecurity-crs:4.8.0-apache-202410200812",
+  "results": {
+    "test": {
+      "display_name": "In-Distribution Test (PRD G1/G2)",
+      "total_requests": 2526,
+      "configs": {
+        "direct_control": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 1019,
+          "precision": 1.0,
+          "recall": 0.0,
+          "recall_ci_95": [
+            0.0,
+            0.0038
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 0.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.0,
+          "latency_p95_ms": 0.0
+        },
+        "modsec_pl1": {
+          "tp": 280,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 739,
+          "precision": 1.0,
+          "recall": 0.2748,
+          "recall_ci_95": [
+            0.2483,
+            0.303
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 0.4311,
+          "block_rate": 0.1108,
+          "latency_p50_ms": 4.64,
+          "latency_p95_ms": 4.81
+        },
+        "modsec_pl2": {
+          "tp": 280,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 739,
+          "precision": 1.0,
+          "recall": 0.2748,
+          "recall_ci_95": [
+            0.2483,
+            0.303
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 0.4311,
+          "block_rate": 0.1108,
+          "latency_p50_ms": 5.38,
+          "latency_p95_ms": 5.62
+        },
+        "ai_waf_rules_only": {
+          "tp": 967,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 52,
+          "precision": 1.0,
+          "recall": 0.949,
+          "recall_ci_95": [
+            0.9337,
+            0.9609
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 0.9738,
+          "block_rate": 0.3828,
+          "latency_p50_ms": 1.11,
+          "latency_p95_ms": 1.41
+        },
+        "ai_waf_ml_only": {
+          "tp": 994,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 25,
+          "precision": 1.0,
+          "recall": 0.9755,
+          "recall_ci_95": [
+            0.964,
+            0.9833
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 0.9876,
+          "block_rate": 0.3935,
+          "latency_p50_ms": 3.37,
+          "latency_p95_ms": 4.1
+        },
+        "ai_waf_hybrid": {
+          "tp": 998,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 21,
+          "precision": 1.0,
+          "recall": 0.9794,
+          "recall_ci_95": [
+            0.9687,
+            0.9865
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 0.9896,
+          "block_rate": 0.3951,
+          "latency_p50_ms": 3.81,
+          "latency_p95_ms": 4.83
+        }
+      }
+    },
+    "evasion_test": {
+      "display_name": "Unseen Family B Evasion (PRD G5)",
+      "total_requests": 857,
+      "configs": {
+        "direct_control": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 0,
+          "fn": 857,
+          "precision": 1.0,
+          "recall": 0.0,
+          "recall_ci_95": [
+            0.0,
+            0.0045
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.0,
+          "latency_p95_ms": 0.0
+        },
+        "modsec_pl1": {
+          "tp": 207,
+          "fp": 0,
+          "tn": 0,
+          "fn": 650,
+          "precision": 1.0,
+          "recall": 0.2415,
+          "recall_ci_95": [
+            0.2141,
+            0.2713
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.3891,
+          "block_rate": 0.2415,
+          "latency_p50_ms": 4.56,
+          "latency_p95_ms": 4.7
+        },
+        "modsec_pl2": {
+          "tp": 207,
+          "fp": 0,
+          "tn": 0,
+          "fn": 650,
+          "precision": 1.0,
+          "recall": 0.2415,
+          "recall_ci_95": [
+            0.2141,
+            0.2713
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.3891,
+          "block_rate": 0.2415,
+          "latency_p50_ms": 5.27,
+          "latency_p95_ms": 5.45
+        },
+        "ai_waf_rules_only": {
+          "tp": 620,
+          "fp": 0,
+          "tn": 0,
+          "fn": 237,
+          "precision": 1.0,
+          "recall": 0.7235,
+          "recall_ci_95": [
+            0.6926,
+            0.7524
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.8395,
+          "block_rate": 0.7235,
+          "latency_p50_ms": 0.92,
+          "latency_p95_ms": 1.02
+        },
+        "ai_waf_ml_only": {
+          "tp": 770,
+          "fp": 0,
+          "tn": 0,
+          "fn": 87,
+          "precision": 1.0,
+          "recall": 0.8985,
+          "recall_ci_95": [
+            0.8765,
+            0.917
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.9465,
+          "block_rate": 0.8985,
+          "latency_p50_ms": 2.78,
+          "latency_p95_ms": 3.08
+        },
+        "ai_waf_hybrid": {
+          "tp": 774,
+          "fp": 0,
+          "tn": 0,
+          "fn": 83,
+          "precision": 1.0,
+          "recall": 0.9032,
+          "recall_ci_95": [
+            0.8815,
+            0.9212
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.9491,
+          "block_rate": 0.9032,
+          "latency_p50_ms": 3.1,
+          "latency_p95_ms": 3.47
+        }
+      }
+    },
+    "evasion_familyA": {
+      "display_name": "Seen Family A Evasion (Augmented)",
+      "total_requests": 1019,
+      "configs": {
+        "direct_control": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 0,
+          "fn": 1019,
+          "precision": 1.0,
+          "recall": 0.0,
+          "recall_ci_95": [
+            0.0,
+            0.0038
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.0,
+          "latency_p95_ms": 0.0
+        },
+        "modsec_pl1": {
+          "tp": 286,
+          "fp": 0,
+          "tn": 0,
+          "fn": 733,
+          "precision": 1.0,
+          "recall": 0.2807,
+          "recall_ci_95": [
+            0.2539,
+            0.309
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.4383,
+          "block_rate": 0.2807,
+          "latency_p50_ms": 4.55,
+          "latency_p95_ms": 4.58
+        },
+        "modsec_pl2": {
+          "tp": 286,
+          "fp": 0,
+          "tn": 0,
+          "fn": 733,
+          "precision": 1.0,
+          "recall": 0.2807,
+          "recall_ci_95": [
+            0.2539,
+            0.309
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.4383,
+          "block_rate": 0.2807,
+          "latency_p50_ms": 5.27,
+          "latency_p95_ms": 5.3
+        },
+        "ai_waf_rules_only": {
+          "tp": 957,
+          "fp": 0,
+          "tn": 0,
+          "fn": 62,
+          "precision": 1.0,
+          "recall": 0.9392,
+          "recall_ci_95": [
+            0.9228,
+            0.9522
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.9686,
+          "block_rate": 0.9392,
+          "latency_p50_ms": 0.91,
+          "latency_p95_ms": 0.97
+        },
+        "ai_waf_ml_only": {
+          "tp": 981,
+          "fp": 0,
+          "tn": 0,
+          "fn": 38,
+          "precision": 1.0,
+          "recall": 0.9627,
+          "recall_ci_95": [
+            0.9492,
+            0.9727
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.981,
+          "block_rate": 0.9627,
+          "latency_p50_ms": 2.74,
+          "latency_p95_ms": 2.99
+        },
+        "ai_waf_hybrid": {
+          "tp": 982,
+          "fp": 0,
+          "tn": 0,
+          "fn": 37,
+          "precision": 1.0,
+          "recall": 0.9637,
+          "recall_ci_95": [
+            0.9504,
+            0.9735
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.9815,
+          "block_rate": 0.9637,
+          "latency_p50_ms": 3.04,
+          "latency_p95_ms": 3.44
+        }
+      }
+    },
+    "benign_obfuscated": {
+      "display_name": "Benign Obfuscated Test (PRD G2)",
+      "total_requests": 1507,
+      "configs": {
+        "direct_control": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.0,
+          "latency_p95_ms": 0.0
+        },
+        "modsec_pl1": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 4.75,
+          "latency_p95_ms": 4.82
+        },
+        "modsec_pl2": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 5.52,
+          "latency_p95_ms": 5.62
+        },
+        "ai_waf_rules_only": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 1.25,
+          "latency_p95_ms": 1.42
+        },
+        "ai_waf_ml_only": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 3.61,
+          "latency_p95_ms": 4.14
+        },
+        "ai_waf_hybrid": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 1507,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0025
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 4.21,
+          "latency_p95_ms": 4.91
+        }
+      }
+    },
+    "cross_source": {
+      "display_name": "Cross-Source CSIC 2010 (PRD G6)",
+      "total_requests": 12069,
+      "configs": {
+        "direct_control": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 0,
+          "fn": 12069,
+          "precision": 1.0,
+          "recall": 0.0,
+          "recall_ci_95": [
+            0.0,
+            0.0003
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.0,
+          "latency_p95_ms": 0.0
+        },
+        "modsec_pl1": {
+          "tp": 1829,
+          "fp": 0,
+          "tn": 0,
+          "fn": 10240,
+          "precision": 1.0,
+          "recall": 0.1515,
+          "recall_ci_95": [
+            0.1453,
+            0.1581
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.2632,
+          "block_rate": 0.1515,
+          "latency_p50_ms": 4.7,
+          "latency_p95_ms": 4.82
+        },
+        "modsec_pl2": {
+          "tp": 1829,
+          "fp": 0,
+          "tn": 0,
+          "fn": 10240,
+          "precision": 1.0,
+          "recall": 0.1515,
+          "recall_ci_95": [
+            0.1453,
+            0.1581
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.2632,
+          "block_rate": 0.1515,
+          "latency_p50_ms": 5.45,
+          "latency_p95_ms": 5.61
+        },
+        "ai_waf_rules_only": {
+          "tp": 2449,
+          "fp": 0,
+          "tn": 0,
+          "fn": 9620,
+          "precision": 1.0,
+          "recall": 0.2029,
+          "recall_ci_95": [
+            0.1958,
+            0.2102
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.3374,
+          "block_rate": 0.2029,
+          "latency_p50_ms": 1.22,
+          "latency_p95_ms": 1.51
+        },
+        "ai_waf_ml_only": {
+          "tp": 142,
+          "fp": 0,
+          "tn": 0,
+          "fn": 11927,
+          "precision": 1.0,
+          "recall": 0.0118,
+          "recall_ci_95": [
+            0.01,
+            0.0139
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.0233,
+          "block_rate": 0.0118,
+          "latency_p50_ms": 3.64,
+          "latency_p95_ms": 4.42
+        },
+        "ai_waf_hybrid": {
+          "tp": 2449,
+          "fp": 0,
+          "tn": 0,
+          "fn": 9620,
+          "precision": 1.0,
+          "recall": 0.2029,
+          "recall_ci_95": [
+            0.1958,
+            0.2102
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0
+          ],
+          "f1": 0.3374,
+          "block_rate": 0.2029,
+          "latency_p50_ms": 4.17,
+          "latency_p95_ms": 5.13
+        }
+      }
+    },
+    "neutral": {
+      "display_name": "Neutral Independent Corpus (Favours Neither)",
+      "total_requests": 1000,
+      "configs": {
+        "direct_control": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 500,
+          "fn": 500,
+          "precision": 1.0,
+          "recall": 0.0,
+          "recall_ci_95": [
+            0.0,
+            0.0076
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0076
+          ],
+          "f1": 0.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.0,
+          "latency_p95_ms": 0.0
+        },
+        "modsec_pl1": {
+          "tp": 162,
+          "fp": 0,
+          "tn": 500,
+          "fn": 338,
+          "precision": 1.0,
+          "recall": 0.324,
+          "recall_ci_95": [
+            0.2845,
+            0.3662
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0076
+          ],
+          "f1": 0.4894,
+          "block_rate": 0.162,
+          "latency_p50_ms": 4.55,
+          "latency_p95_ms": 4.56
+        },
+        "modsec_pl2": {
+          "tp": 162,
+          "fp": 0,
+          "tn": 500,
+          "fn": 338,
+          "precision": 1.0,
+          "recall": 0.324,
+          "recall_ci_95": [
+            0.2845,
+            0.3662
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0076
+          ],
+          "f1": 0.4894,
+          "block_rate": 0.162,
+          "latency_p50_ms": 5.26,
+          "latency_p95_ms": 5.28
+        },
+        "ai_waf_rules_only": {
+          "tp": 408,
+          "fp": 0,
+          "tn": 500,
+          "fn": 92,
+          "precision": 1.0,
+          "recall": 0.816,
+          "recall_ci_95": [
+            0.7797,
+            0.8475
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0076
+          ],
+          "f1": 0.8987,
+          "block_rate": 0.408,
+          "latency_p50_ms": 0.9,
+          "latency_p95_ms": 0.94
+        },
+        "ai_waf_ml_only": {
+          "tp": 284,
+          "fp": 0,
+          "tn": 500,
+          "fn": 216,
+          "precision": 1.0,
+          "recall": 0.568,
+          "recall_ci_95": [
+            0.5242,
+            0.6107
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0076
+          ],
+          "f1": 0.7245,
+          "block_rate": 0.284,
+          "latency_p50_ms": 2.67,
+          "latency_p95_ms": 2.86
+        },
+        "ai_waf_hybrid": {
+          "tp": 418,
+          "fp": 0,
+          "tn": 500,
+          "fn": 82,
+          "precision": 1.0,
+          "recall": 0.836,
+          "recall_ci_95": [
+            0.801,
+            0.8659
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0076
+          ],
+          "f1": 0.9107,
+          "block_rate": 0.418,
+          "latency_p50_ms": 2.97,
+          "latency_p95_ms": 3.18
+        }
+      }
+    },
+    "large_benign": {
+      "display_name": "Large Benign Set (High-Precision FPR)",
+      "total_requests": 3000,
+      "configs": {
+        "direct_control": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 3000,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0013
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.0,
+          "latency_p95_ms": 0.0
+        },
+        "modsec_pl1": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 3000,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0013
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 4.54,
+          "latency_p95_ms": 4.55
+        },
+        "modsec_pl2": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 3000,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0013
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 5.25,
+          "latency_p95_ms": 5.26
+        },
+        "ai_waf_rules_only": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 3000,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0013
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 0.9,
+          "latency_p95_ms": 0.94
+        },
+        "ai_waf_ml_only": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 3000,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0013
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 2.67,
+          "latency_p95_ms": 2.88
+        },
+        "ai_waf_hybrid": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 3000,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "recall_ci_95": [
+            0.0,
+            0.0
+          ],
+          "fpr": 0.0,
+          "fpr_ci_95": [
+            0.0,
+            0.0013
+          ],
+          "f1": 1.0,
+          "block_rate": 0.0,
+          "latency_p50_ms": 2.96,
+          "latency_p95_ms": 3.22
+        }
+      }
+    }
+  },
+  "overlap_analysis": {
+    "evasion_test": {
+      "total_attacks": 857,
+      "both_blocked": 206,
+      "only_ai_blocked": 568,
+      "only_modsec_blocked": 1,
+      "neither_blocked": 82,
+      "serial_combination_recall": 0.9043,
+      "sample_only_ai": [
+        {
+          "id": "evasion_family_b-00245",
+          "type": "sqli",
+          "payload": "get /test post /rest/user/login query=) or pg_sleep(__time__"
+        },
+        {
+          "id": "evasion_family_b-00302",
+          "type": "xss",
+          "payload": "get /test get /feedback msg=<ins onbeforecopy=\"alert(1)\" con"
+        },
+        {
+          "id": "evasion_family_b-00475",
+          "type": "xss",
+          "payload": "get /test get /feedback msg=<div draggable=\"true\" contentedi"
+        }
+      ],
+      "sample_only_ms": [
+        {
+          "id": "evasion_family_b-00476",
+          "type": "sqli",
+          "payload": "get /rest/products/search q=pg_sleep(__time__)--"
+        }
+      ]
+    },
+    "neutral": {
+      "total_attacks": 500,
+      "both_blocked": 162,
+      "only_ai_blocked": 256,
+      "only_modsec_blocked": 0,
+      "neither_blocked": 82,
+      "serial_combination_recall": 0.836,
+      "sample_only_ai": [
+        {
+          "id": "neutral-00323",
+          "type": "path_traversal",
+          "payload": "....\\\\....\\\\windows\\\\win.ini?seed=23"
+        },
+        {
+          "id": "neutral-00228",
+          "type": "xss",
+          "payload": "<audio src=1 onerror=alert(String.fromCharCode(88,83,83))><!"
+        },
+        {
+          "id": "neutral-00170",
+          "type": "xss",
+          "payload": "<video><source onerror=\"javascript:alert('XSS')\"><!-- neutra"
+        }
+      ],
+      "sample_only_ms": []
+    },
+    "test": {
+      "total_attacks": 1019,
+      "both_blocked": 279,
+      "only_ai_blocked": 719,
+      "only_modsec_blocked": 1,
+      "neither_blocked": 20,
+      "serial_combination_recall": 0.9804,
+      "sample_only_ai": [
+        {
+          "id": "test-01401",
+          "type": "xss",
+          "payload": "get /feedback msg=<div draggable=\"true\" contenteditable>drag"
+        },
+        {
+          "id": "test-02329",
+          "type": "sqli",
+          "payload": "post /rest/user/login query=root' #&user=admin content-type:"
+        },
+        {
+          "id": "test-00295",
+          "type": "xss",
+          "payload": "get /feedback msg=<nav onfocusout=alert(1) tabindex=1 id=x><"
+        }
+      ],
+      "sample_only_ms": [
+        {
+          "id": "test-00126",
+          "type": "sqli",
+          "payload": "post /rest/user/login query=t'exec master..xp_cmdshell 'nslo"
+        }
+      ]
+    }
+  }
+}

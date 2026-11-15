@@ -34,6 +34,11 @@ services:
         condition: service_started
     networks:
       - waf-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8080/healthz\")' || exit 1"]
       interval: 10s
@@ -81,6 +86,76 @@ services:
         condition: service_started
     networks:
       - waf-network
+
+  # ============================================================================
+  # ModSecurity + OWASP CRS Baseline Services (Stage 5 Benchmarking)
+  # Activated with `--profile baseline`: docker compose --profile baseline up -d
+  # ============================================================================
+  modsecurity-pl1:
+    image: owasp/modsecurity-crs:4.8.0-apache-202410200812
+    container_name: waf-modsec-pl1
+    profiles:
+      - baseline
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      - BACKEND=http://demo-app:3000
+      - PARANOIA=1
+      - BLOCKING_PARANOIA=1
+      - ANOMALY_INBOUND=5
+      - ANOMALY_OUTBOUND=4
+      - MODSEC_RULE_ENGINE=On
+      - MODSEC_REQ_BODY_LIMIT=16384
+      - MODSEC_AUDIT_ENGINE=RelevantOnly
+      - MODSEC_AUDIT_LOG_FORMAT=JSON
+      - MODSEC_AUDIT_LOG=/var/log/apache2/modsec_audit.log
+    volumes:
+      - ./eval/modsec/modsec-pl1-audit.log:/var/log/apache2/modsec_audit.log
+      - ./eval/modsec/custom-audit.conf:/etc/modsecurity.d/owasp-crs/custom-audit.conf:ro
+    depends_on:
+      demo-app:
+        condition: service_started
+    networks:
+      - waf-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  modsecurity-pl2:
+    image: owasp/modsecurity-crs:4.8.0-apache-202410200812
+    container_name: waf-modsec-pl2
+    profiles:
+      - baseline
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:80"
+    environment:
+      - BACKEND=http://demo-app:3000
+      - PARANOIA=2
+      - BLOCKING_PARANOIA=2
+      - ANOMALY_INBOUND=5
+      - ANOMALY_OUTBOUND=4
+      - MODSEC_RULE_ENGINE=On
+      - MODSEC_REQ_BODY_LIMIT=16384
+      - MODSEC_AUDIT_ENGINE=RelevantOnly
+      - MODSEC_AUDIT_LOG_FORMAT=JSON
+      - MODSEC_AUDIT_LOG=/var/log/apache2/modsec_audit.log
+    volumes:
+      - ./eval/modsec/modsec-pl2-audit.log:/var/log/apache2/modsec_audit.log
+      - ./eval/modsec/custom-audit.conf:/etc/modsecurity.d/owasp-crs/custom-audit.conf:ro
+    depends_on:
+      demo-app:
+        condition: service_started
+    networks:
+      - waf-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
 
   # ============================================================================
   # Optional Production Database (PostgreSQL) - Uncomment to switch from SQLite

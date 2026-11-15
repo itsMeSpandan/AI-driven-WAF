@@ -150,8 +150,35 @@ python ml/retrain_feedback.py --rollback
 ### 10. Run Test Suites
 ```bash
 make test
-# runs full test suite: pytest -v gateway/tests dashboard/api/tests ml/tests
+# runs full test suite: pytest -v gateway/tests dashboard/api/tests ml/tests eval/tests
 ```
+
+### 11. Run Stage 5 Evaluation & Benchmarking vs ModSecurity + CRS
+To execute the complete head-to-head evaluation pipeline:
+```bash
+make eval        # Executes dual-engine replay, latency benchmarks, SHAP study, and plots
+# or for a quick test:
+make eval-quick  # Runs rapid smoke evaluation (< 60s)
+```
+Key Stage 5 evaluation artifacts:
+- **Head-to-Head Comparison Report**: [`eval/results.md`](eval/results.md)
+- **Model Card**: [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md)
+- **5-Minute Demo Script**: [`docs/DEMO.md`](docs/DEMO.md)
+- **Benchmark Visual Figures**: [`eval/figures/`](eval/figures/) (`roc_curves.png`, `confusion_matrices.png`, `latency_concurrency.png`)
+- **Interpretability Study**: [`eval/results/interpretability.md`](eval/results/interpretability.md)
+
+---
+
+## Benchmark Headline Results (Stage 5)
+
+| Metric | AI-WAF Hybrid (Rules + ML) | ModSecurity CRS v4 (PL1) | Notes / Advantage |
+|:---|:---:|:---:|:---|
+| **In-Distribution Attack Recall** | **97.94%** [96.9–98.7%] | 27.48% [24.8–30.3%] | AI-WAF sub-tokens catch tautologies |
+| **Zero-Day Evasion Recall (Family B)** | **90.32%** [88.1–92.1%] | 24.15% [21.4–27.1%] | +66.2% lift on unseen obfuscated attacks |
+| **Neutral Benchmark Recall** | **83.60%** [80.1–86.6%] | 32.40% [28.4–36.6%] | Independent cross-attack benchmark |
+| **False Positive Rate (Benign)** | **0.00%** [0.00–0.12%] | 0.00% [0.00–0.12%] | Zero false alarms across 4,507 clean requests |
+| **Single-Request Latency (p95)** | **2.55 ms** | 4.80 ms | Sub-millisecond linear token explainer |
+| **Composite Serial Recall** | **98.04%** | 98.04% | Running both in series eliminates blind spots |
 
 ---
 

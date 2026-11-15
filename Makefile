@@ -1,4 +1,4 @@
-.PHONY: help up down logs test lint demo openapi seed clean data train retrain-feedback promote-model rollback-model
+.PHONY: help up down logs test lint demo openapi seed clean data train retrain-feedback promote-model rollback-model eval eval-quick
 
 help:
 	@echo "AI-Driven WAF & Analytics Dashboard"
@@ -16,6 +16,8 @@ help:
 	@echo "  make retrain-feedback - Retrain candidate model on analyst feedback"
 	@echo "  make promote-model    - Promote verified candidate model to active detector"
 	@echo "  make rollback-model   - Roll back active detector to previous backup model"
+	@echo "  make eval             - Run complete Stage 5 evaluation suite & generate figures"
+	@echo "  make eval-quick       - Run rapid evaluation suite (< 60s sample)"
 
 data:
 	python ml/data/download.py --dataset all
@@ -43,10 +45,21 @@ logs:
 	docker compose logs -f
 
 test:
-	pytest -v gateway/tests dashboard/api/tests ml/tests
+	pytest -v gateway/tests dashboard/api/tests ml/tests eval/tests
 
-benchmark:
-	python eval/benchmark_latency.py
+eval:
+	python eval/build_corpora.py
+	python eval/benchmark_dual_proxy.py
+	python eval/benchmark_perf.py
+	python eval/shap_analysis.py
+	python eval/generate_figures.py
+	@echo "Stage 5 evaluation suite complete. Artifacts written to eval/results/ and eval/figures/."
+
+eval-quick:
+	python eval/benchmark_dual_proxy.py --limit 200
+	python eval/benchmark_perf.py --quick
+	python eval/generate_figures.py
+	@echo "Quick evaluation complete."
 
 lint:
 	python -m ruff check gateway dashboard ml demo || echo "Ruff check complete"
