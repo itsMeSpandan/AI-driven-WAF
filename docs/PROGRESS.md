@@ -11,7 +11,7 @@
 | 1. Foundations & Contracts | All | ✅ Done | Week 1 | Full repo scaffold, proxy, frozen API, Next.js UI, EDA, simulator |
 | 2. Detection Core | A, B, C | ✅ Done | Weeks 2–3 | TF-IDF + lexical features, 4 models trained, LogisticRegression selected, 29 bounded rules, gateway integration |
 | 3. Robustness & Explainability | A, B, C | ✅ Done | Weeks 3–4 | Deterministic evasion mutations (Family A/B), augmented retraining, cross-source eval, cached linear explainer, safe token drawer |
-| 4. Dashboard Completion & Controls | C, B, A | ⬜ Not started | Week 5 | Config API, false-positive feedback, rate anomaly flag |
+| 4. Dashboard Completion & Controls | C, B, A | ✅ Done | Week 5 | Config API + audit trail, rate limiter + burst flags, feedback loop + safety gates, auth, error analysis, scope freeze |
 | 5. Evaluation & Benchmarking | A, B, C | ⬜ Not started | Week 6 | ModSecurity+CRS baseline, p95 benchmarks, results tables |
 | 6. Hardening, Docs & Demo | All | ⬜ Not started | Weeks 7–8 | Final report, slides, demo video, v1.0 release |
 
@@ -62,16 +62,16 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 - [x] Explainer latency benchmark over 1,000 requests (`eval/latency_stage3.md`) (All)
 
 ## Stage 4 — Dashboard Completion & Controls
-- [ ] All dashboard panels (C)
-- [ ] Settings page (mode, threshold) (C)
-- [ ] Model/Eval page (C)
-- [ ] Config API (B)
-- [ ] Per-IP rate anomaly flag (B)
-- [ ] False-positive feedback endpoint + button (B/C)
-- [ ] Simple auth on dashboard (B)
-- [ ] Retrain-from-feedback script (A)
-- [ ] Error analysis of misclassifications (A)
-- [ ] Scope freeze declared
+- [x] All dashboard panels (KPICards, TrafficThreats, AttackDonut, TopEndpoints, TopIPsTable, LiveAlertFeed) (C)
+- [x] Settings page (mode toggle confirmation, real-time threshold slider trade-offs, rate limiter settings, audit trail) (C)
+- [x] Model/Eval page (PRD metrics matrix, benchmark comparison, feedback retraining gates) (C)
+- [x] Config API (`GET/PUT /api/config`, `/audit`, `/threshold-sweep`) (B)
+- [x] Per-IP rate anomaly flag (`gateway/rate_limiter.py`: burst, block_burst, scanner_like, anti-spoofing) (B)
+- [x] False-positive feedback endpoint + button (`POST /api/events/{id}/feedback`, `GET /api/feedback/export`, drawer integration) (B/C)
+- [x] Simple auth on dashboard (RFC 7519 HS256 JWT, PBKDF2 hashing, brute-force rate limit, `LoginModal.tsx`) (B)
+- [x] Retrain-from-feedback script (`ml/retrain_feedback.py` with 4 automated promotion gates & rollback) (A)
+- [x] Error analysis of misclassifications (`ml/error_analysis.py` -> `ml/reports/error_analysis.md`) (A)
+- [x] Scope freeze declared (`docs/SCOPE_FREEZE.md`) (All)
 
 ## Stage 5 — Evaluation & Benchmarking
 - [ ] ModSecurity + CRS baseline running (B)
@@ -100,6 +100,7 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 | 2026-11-15 | Stage 1 Stub | N/A | N/A | N/A | 0.0% | N/A | 1.68 ms | Gateway overhead baseline |
 | 2026-11-15 | Stage 2 Plain Baseline | 1.0000 | 1.0000 | 1.0000 | 0.00% (val 0.00%) | 77.60% (Unseen Family B) | 5.11 ms | Threshold 0.900, size 2.00 MB |
 | 2026-11-15 | **Stage 3 Robust Model** | **1.0000** | **1.0000** | **1.0000** | **0.00% (0.13% under obf)** | **83.31% (Unseen Family B)** | **1.41 ms (ML alone) / 2.40 ms (full)** | Threshold 0.940, +5.71% lift on zero-day evasion, size 2.04 MB |
+| 2026-11-15 | **Stage 4 Feedback Retrained** | **0.9990** | **1.0000** | **0.9995** | **0.07% (benign test)** | **84.36% (Unseen Family B)** | **1.84 ms (ML alone) / 2.55 ms (full)** | Passes all 4 safety gates (FPR <= 2.5%, evasion recall delta +1.05%, p95 < 10ms) |
 | 2026-11-15 | ModSecurity + CRS (Reference) | 0.9100 | 0.8200 | 0.8620 | 4.80% | 68.00% | 18.00 ms | PL 1 default reference |
 
 ## Decisions Log
@@ -120,6 +121,12 @@ Legend: ⬜ Not started · 🟦 In progress · ✅ Done · ⛔ Blocked
 | 2026-11-15 | Augment benign traffic alongside malicious attacks | Exposing model to URL-encoded and whitespace-varied benign samples prevented false alarms under obfuscation (FPR maintained at 0.13%). |
 | 2026-11-15 | Cache vocabulary in linear token attribution explainer | Avoids recreating 50k numpy string array on every inspection event, reducing attribution overhead from 31 ms to 0.75 ms p95. |
 | 2026-11-15 | Safe UI token rendering via React text nodes | Strict prohibition of `dangerouslySetInnerHTML`; payload substrings rendered safely via React children and styled marks. |
+| 2026-11-15 | In-memory sliding window rate limiter with LRU bounding | Capped at 10,000 IPs with periodic TTL pruning; prevents unbounded memory consumption and microsecond evaluation overhead ($< 15\,\mu\text{s}$). |
+| 2026-11-15 | Strict proxy verification for anti-spoofing (`TRUSTED_PROXIES`) | Discards spoofed `X-Forwarded-For` headers from untrusted clients; resolves socket peer IP unless connection arrives from configured trusted CIDR. |
+| 2026-11-15 | Zero-external-dependency RFC 7519 HS256 JWT & PBKDF2 hashing | Implemented using standard library `hmac`, `hashlib`, `base64`, avoiding unapproved heavyweight external dependencies. |
+| 2026-11-15 | Poisoning defense in analyst feedback loop (`ml/retrain_feedback.py`) | Automatically rejects any analyst FP label on payloads that match high/critical rule signatures (`SQLI-001`, `XSS-001`). |
+| 2026-11-15 | 4 automated promotion gates on candidate model retraining | Enforces FPR $\le 2.5\%$, evasion recall drop $\le 2.0\%$, cross-source drop $\le 2.0\%$, p95 latency $\le 10.0$ ms before candidate promotion. |
+| 2026-11-15 | Formal Scope Freeze declared for Stage 4 | All Must and Should features from PRD 1.7 verified and locked; Stage 5 dedicated strictly to ModSecurity baseline benchmarking. |
 
 ## Blockers / Risks Open
 

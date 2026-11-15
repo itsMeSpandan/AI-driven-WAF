@@ -128,14 +128,26 @@ make seed
 python dashboard/api/seed_demo_data.py
 ```
 
-### 8. Run the Attack Simulator (Including Evasions)
+### 8. Run the Attack Simulator (Including Evasions & Burst Mode)
 ```bash
 make demo
 # or test zero-day evasion mutations:
 python demo/attack_simulator.py --target http://localhost:8080 --count 30 --types sqli,xss,evasion_a,evasion_b,benign
+# or simulate rapid scanner bursts to trigger rate limiting:
+python demo/attack_simulator.py --target http://localhost:8080 --burst --count 50
 ```
 
-### 9. Run Test Suites
+### 9. Safe Feedback Retraining & Model Promotion (Stage 4)
+```bash
+# Ingest analyst feedback, train candidate model, evaluate 4 safety gates:
+python ml/retrain_feedback.py
+# Promote candidate model if all gates pass (creates atomic backup):
+python ml/retrain_feedback.py --promote
+# Roll back to previous active model if needed:
+python ml/retrain_feedback.py --rollback
+```
+
+### 10. Run Test Suites
 ```bash
 make test
 # runs full test suite: pytest -v gateway/tests dashboard/api/tests ml/tests

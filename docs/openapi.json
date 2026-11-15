@@ -6,6 +6,118 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "description": "Authenticate administrator credentials and return an RFC 7519 JWT Bearer token.",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Current User Profile",
+        "description": "Retrieve profile and authentication state of current active session.",
+        "operationId": "get_current_user_profile_api_auth_me_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "description": "Client-side token disposal endpoint.",
+        "operationId": "logout_api_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stats/summary": {
       "get": {
         "tags": [
@@ -327,6 +439,78 @@
               "title": "Verdict"
             },
             "description": "Filter by verdict: allow, flag, block"
+          },
+          {
+            "name": "anomaly_flag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by anomaly flag: rate_burst, block_burst, scanner_like",
+              "title": "Anomaly Flag"
+            },
+            "description": "Filter by anomaly flag: rate_burst, block_burst, scanner_like"
+          },
+          {
+            "name": "feedback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by feedback: fp, tp, unlabeled",
+              "title": "Feedback"
+            },
+            "description": "Filter by feedback: fp, tp, unlabeled"
+          },
+          {
+            "name": "client_ip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by client IP",
+              "title": "Client Ip"
+            },
+            "description": "Filter by client IP"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free text search on path, query, or IP",
+              "title": "Search"
+            },
+            "description": "Free text search on path, query, or IP"
           }
         ],
         "responses": {
@@ -411,6 +595,22 @@
               "type": "string",
               "title": "Event Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
           }
         ],
         "requestBody": {
@@ -430,6 +630,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FeedbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feedback/export": {
+      "get": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "Export Feedback",
+        "description": "Export analyst-verified feedback instances for model retraining.\nReturns canonical text representation and validated labels.",
+        "operationId": "export_feedback_api_feedback_export_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackExportResponse"
                 }
               }
             }
@@ -493,15 +755,33 @@
         ],
         "summary": "Update Config",
         "operationId": "update_config_api_config_put",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/WAFConfig"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -520,6 +800,74 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config/audit": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Get Config Audit",
+        "description": "Retrieve the recent configuration audit trail entries.",
+        "operationId": "get_config_audit_api_config_audit_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigAuditResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config/threshold-sweep": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Get Threshold Sweep",
+        "description": "Returns empirical FPR vs Recall validation trade-off curve\nso the Settings UI threshold slider can display real-time impact.",
+        "operationId": "get_threshold_sweep_api_config_threshold_sweep_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThresholdSweepResponse"
                 }
               }
             }
@@ -595,6 +943,78 @@
           "items"
         ],
         "title": "AttackTypeResponse"
+      },
+      "ConfigAuditItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "old_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Value"
+          },
+          "new_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ts",
+          "actor",
+          "key"
+        ],
+        "title": "ConfigAuditItem"
+      },
+      "ConfigAuditResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConfigAuditItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "ConfigAuditResponse"
       },
       "EventDetailResponse": {
         "properties": {
@@ -692,6 +1112,17 @@
             ],
             "title": "Model Version",
             "default": "none"
+          },
+          "anomaly_flag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomaly Flag"
           },
           "user_agent": {
             "anyOf": [
@@ -821,6 +1252,17 @@
             ],
             "title": "Model Version",
             "default": "none"
+          },
+          "anomaly_flag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomaly Flag"
           }
         },
         "type": "object",
@@ -868,16 +1310,105 @@
         ],
         "title": "EventsListResponse"
       },
+      "FeedbackExportItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "analyst": {
+            "type": "string",
+            "title": "Analyst"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "canonical_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_id",
+          "ts",
+          "analyst",
+          "label"
+        ],
+        "title": "FeedbackExportItem"
+      },
+      "FeedbackExportResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackExportItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "FeedbackExportResponse"
+      },
       "FeedbackRequest": {
         "properties": {
           "feedback": {
             "type": "string",
             "enum": [
               "fp",
-              "tp"
+              "tp",
+              "clear"
             ],
             "title": "Feedback",
-            "description": "'fp' for false positive, 'tp' for true positive"
+            "description": "'fp' for false positive, 'tp' for true positive, 'clear' to reset"
           },
           "notes": {
             "anyOf": [
@@ -934,6 +1465,52 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "LoginResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in_sec": {
+            "type": "integer",
+            "title": "Expires In Sec"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in_sec",
+          "username"
+        ],
+        "title": "LoginResponse"
+      },
       "SummaryStatsResponse": {
         "properties": {
           "total_requests": {
@@ -983,6 +1560,60 @@
           "avg_latency_ms"
         ],
         "title": "SummaryStatsResponse"
+      },
+      "ThresholdSweepPoint": {
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "fpr": {
+            "type": "number",
+            "title": "Fpr"
+          },
+          "recall": {
+            "type": "number",
+            "title": "Recall"
+          },
+          "f1": {
+            "type": "number",
+            "title": "F1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "threshold",
+          "fpr",
+          "recall",
+          "f1"
+        ],
+        "title": "ThresholdSweepPoint"
+      },
+      "ThresholdSweepResponse": {
+        "properties": {
+          "active_threshold": {
+            "type": "number",
+            "title": "Active Threshold"
+          },
+          "suggested_threshold": {
+            "type": "number",
+            "title": "Suggested Threshold"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ThresholdSweepPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_threshold",
+          "suggested_threshold",
+          "points"
+        ],
+        "title": "ThresholdSweepResponse"
       },
       "TimeSeriesPoint": {
         "properties": {
@@ -1132,6 +1763,29 @@
         ],
         "title": "TopIPsResponse"
       },
+      "UserResponse": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "authenticated": {
+            "type": "boolean",
+            "title": "Authenticated"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "admin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "authenticated"
+        ],
+        "title": "UserResponse"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1190,7 +1844,7 @@
             "minimum": 0.0,
             "title": "Ml Threshold",
             "description": "ML anomaly trigger threshold",
-            "default": 0.75
+            "default": 0.94
           },
           "max_body_inspect_bytes": {
             "type": "integer",
@@ -1209,8 +1863,37 @@
             "title": "Fail Mode",
             "description": "Fail open or closed on fatal error",
             "default": "closed"
+          },
+          "rate_limit_enabled": {
+            "type": "boolean",
+            "title": "Rate Limit Enabled",
+            "description": "Enable sliding window rate anomaly detection",
+            "default": true
+          },
+          "rate_limit_window_sec": {
+            "type": "integer",
+            "maximum": 300.0,
+            "minimum": 1.0,
+            "title": "Rate Limit Window Sec",
+            "description": "Sliding window duration in seconds",
+            "default": 10
+          },
+          "rate_limit_burst": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Rate Limit Burst",
+            "description": "Max requests permitted in window before flagging",
+            "default": 30
+          },
+          "rate_enforce": {
+            "type": "boolean",
+            "title": "Rate Enforce",
+            "description": "Actively reject burst traffic with HTTP 429 when True",
+            "default": false
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "WAFConfig"
       }

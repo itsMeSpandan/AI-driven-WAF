@@ -1,0 +1,146 @@
+{
+  "model_version": "Candidate_Feedback_20261115_044617",
+  "parent_model_version": "Stage3_Robust_20261114_204029",
+  "created_at": "2026-11-15T04:46:17.591647+00:00",
+  "threshold": 0.94,
+  "gates_passed": true,
+  "gate_results": {
+    "gate1_fpr_under_2_5_pct": true,
+    "gate2_evasion_drop_under_2_pct": true,
+    "gate3_cross_source_drop_under_2_pct": true,
+    "gate4_p95_latency_under_10ms": true
+  },
+  "feedback_summary": {
+    "total_ingested": 1,
+    "deduplicated_used": 1,
+    "benign_fp_samples": 1,
+    "malicious_tp_samples": 0,
+    "rejected_rule_conflicts": 0
+  },
+  "metrics": {
+    "active_model": {
+      "test": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_malicious": 1.0,
+        "f1_macro": 1.0,
+        "fpr": 0.0,
+        "roc_auc": 1.0,
+        "confusion_matrix": {
+          "tn": 1507,
+          "fp": 0,
+          "fn": 0,
+          "tp": 1019
+        }
+      },
+      "evasion": {
+        "precision": 1.0,
+        "recall": 0.8331,
+        "f1_malicious": 0.909,
+        "f1_macro": 0.4545,
+        "fpr": 0.0,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 0,
+          "fn": 143,
+          "tp": 714
+        }
+      },
+      "benign_obfuscated": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_malicious": 0.0,
+        "f1_macro": 0.4997,
+        "fpr": 0.0013,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 1505,
+          "fp": 2,
+          "fn": 0,
+          "tp": 0
+        }
+      },
+      "cross_source": {
+        "precision": 1.0,
+        "recall": 0.0379,
+        "f1_malicious": 0.0731,
+        "f1_macro": 0.0366,
+        "fpr": 0.0,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 0,
+          "fn": 11611,
+          "tp": 458
+        }
+      },
+      "latency": {
+        "p50": 1.879,
+        "p95": 2.635
+      }
+    },
+    "candidate_model": {
+      "test": {
+        "precision": 0.999,
+        "recall": 0.999,
+        "f1_malicious": 0.999,
+        "f1_macro": 0.9992,
+        "fpr": 0.0007,
+        "roc_auc": 1.0,
+        "confusion_matrix": {
+          "tn": 1506,
+          "fp": 1,
+          "fn": 1,
+          "tp": 1018
+        }
+      },
+      "evasion": {
+        "precision": 1.0,
+        "recall": 0.8436,
+        "f1_malicious": 0.9152,
+        "f1_macro": 0.4576,
+        "fpr": 0.0,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 0,
+          "fn": 134,
+          "tp": 723
+        }
+      },
+      "benign_obfuscated": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_malicious": 0.0,
+        "f1_macro": 0.4997,
+        "fpr": 0.0013,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 1505,
+          "fp": 2,
+          "fn": 0,
+          "tp": 0
+        }
+      },
+      "cross_source": {
+        "precision": 1.0,
+        "recall": 0.0424,
+        "f1_malicious": 0.0814,
+        "f1_macro": 0.0407,
+        "fpr": 0.0,
+        "roc_auc": 0.0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 0,
+          "fn": 11557,
+          "tp": 512
+        }
+      },
+      "latency": {
+        "p50": 1.837,
+        "p95": 2.547
+      }
+    }
+  }
+}

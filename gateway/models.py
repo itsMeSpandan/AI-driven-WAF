@@ -20,6 +20,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     Index,
+    Integer,
     String,
     Text,
     create_engine,
@@ -53,12 +54,14 @@ class Event(Base):
     explanation = Column(JSON, default=dict)
     feedback = Column(String(16), nullable=True)  # 'fp', 'tp', None
     model_version = Column(String(64), default="none", nullable=True)
+    anomaly_flag = Column(String(64), nullable=True)  # 'rate_burst', 'block_burst', 'scanner_like'
 
     __table_args__ = (
         Index("idx_events_ts", "ts"),
         Index("idx_events_verdict", "verdict"),
         Index("idx_events_attack_type", "attack_type"),
         Index("idx_events_path", "path"),
+        Index("idx_events_anomaly_flag", "anomaly_flag"),
     )
 
 
@@ -69,6 +72,43 @@ class Config(Base):
 
     key = Column(String(128), primary_key=True)
     value = Column(Text, nullable=False)
+
+
+class ConfigAudit(Base):
+    """Audit trail of runtime configuration changes."""
+
+    __tablename__ = "config_audit"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ts = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    actor = Column(String(64), default="admin", nullable=False)
+    key = Column(String(128), nullable=False)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+
+    __table_args__ = (
+        Index("idx_config_audit_ts", "ts"),
+    )
+
+
+class Feedback(Base):
+    """Analyst false positive / true positive reviews for model calibration."""
+
+    __tablename__ = "feedback"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    event_id = Column(String(36), nullable=False, index=True)
+    ts = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    analyst = Column(String(64), default="admin", nullable=False)
+    label = Column(String(16), nullable=False)  # 'fp', 'tp', 'clear'
+    notes = Column(Text, nullable=True)
+    model_version = Column(String(64), nullable=True)
+    canonical_text = Column(Text, nullable=True)
+
+    __table_args__ = (
+        Index("idx_feedback_ts", "ts"),
+        Index("idx_feedback_label", "label"),
+    )
 
 
 class ModelVersion(Base):
@@ -113,10 +153,15 @@ def init_db(db_url: Optional[str] = None):
     engine = get_engine(db_url)
     Base.metadata.create_all(bind=engine)
 
-    # Lightweight migration: ensure model_version column exists on events
+    # Lightweight migration: ensure model_version and anomaly_flag columns exist on events
     with engine.connect() as conn:
         try:
             conn.execute(text("ALTER TABLE events ADD COLUMN model_version VARCHAR(64) DEFAULT 'none'"))
+            conn.commit()
+        except Exception:
+            pass
+        try:
+            conn.execute(text("ALTER TABLE events ADD COLUMN anomaly_flag VARCHAR(64)"))
             conn.commit()
         except Exception:
             pass
@@ -125,9 +170,13 @@ def init_db(db_url: Optional[str] = None):
     with sessionmaker(bind=engine)() as session:
         default_configs = {
             "waf_mode": os.getenv("WAF_MODE", "block"),
-            "ml_threshold": os.getenv("ML_THRESHOLD", "0.75"),
+            "ml_threshold": os.getenv("ML_THRESHOLD", "0.94"),
             "max_body_inspect_bytes": os.getenv("MAX_BODY_INSPECT_BYTES", "16384"),
             "fail_mode": os.getenv("FAIL_MODE", "closed"),
+            "rate_limit_enabled": "true",
+            "rate_limit_window_sec": "10",
+            "rate_limit_burst": "30",
+            "rate_enforce": "false",
         }
         for k, v in default_configs.items():
             existing = session.query(Config).filter_by(key=k).first()

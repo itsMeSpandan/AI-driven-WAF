@@ -18,17 +18,23 @@
 
 | Method | Endpoint | Description | Request / Query | Response Model |
 |---|---|---|---|---|
+| `POST` | `/api/auth/login` | SecOps authentication with brute-force defense | JSON: `{"username", "password"}` | `LoginResponse` |
+| `GET` | `/api/auth/me` | Current authenticated admin session profile | Bearer Token Header | `UserResponse` |
+| `POST` | `/api/auth/logout` | Client token disposal endpoint | None | `{"success": true}` |
 | `GET` | `/api/stats/summary` | Aggregate KPI statistics | `range` (`5m`, `1h`, `24h`, `7d`) | `SummaryStatsResponse` |
 | `GET` | `/api/stats/timeseries` | Binned traffic vs threats data | `range`, `bucket` (`1m`, `5m`, `1h`) | `TimeSeriesResponse` |
 | `GET` | `/api/stats/attack-types` | Breakdown by attack category | `range` | `AttackTypeResponse` |
 | `GET` | `/api/stats/top-endpoints` | Top targeted paths | `limit` (default: 10), `range` | `TopEndpointsResponse` |
 | `GET` | `/api/stats/top-ips` | Top requesting and blocked IPs | `limit` (default: 10), `range` | `TopIPsResponse` |
-| `GET` | `/api/events` | Paginated inspection log | `limit`, `offset`, `type`, `verdict` | `EventsListResponse` |
-| `GET` | `/api/events/{id}` | Single event with explainer tokens | `{id}` in path | `EventDetailResponse` |
-| `POST` | `/api/events/{id}/feedback` | Record FP / TP analyst review | JSON: `{"feedback": "fp" \| "tp"}` | `FeedbackResponse` |
+| `GET` | `/api/events` | Paginated inspection log with multi-facet filters | `limit`, `offset`, `verdict`, `attack_type`, `anomaly_flag`, `feedback`, `search` | `EventsListResponse` |
+| `GET` | `/api/events/{id}` | Single event with explainer tokens & spans | `{id}` in path | `EventDetailResponse` |
+| `POST` | `/api/events/{id}/feedback` | Record FP / TP / Clear analyst review | JSON: `{"feedback": "fp" \| "tp" \| "clear", "notes"}` | `FeedbackResponse` |
+| `GET` | `/api/feedback/export` | Export analyst feedback for candidate retraining | `limit` (default: 500) | `FeedbackExportResponse` |
 | `GET` | `/api/stream` | Real-time SSE alert event feed | None | `text/event-stream` (`event: alert`) |
 | `GET` | `/api/config` | Read runtime WAF configuration | None | `WAFConfig` |
-| `PUT` | `/api/config` | Update runtime WAF settings | JSON: `WAFConfig` | `WAFConfig` |
+| `PUT` | `/api/config` | Update runtime WAF settings (creates audit log) | JSON: `WAFConfig` | `WAFConfig` |
+| `GET` | `/api/config/audit` | Query immutable configuration change audit trail | `limit` (default: 20) | `ConfigAuditResponse` |
+| `GET` | `/api/config/threshold-sweep` | 11-point threshold trade-off curve (FPR, recall, F1) | None | `ThresholdSweepResponse` |
 | `GET` | `/healthz` | Dashboard API liveness check | None | `{"status": "ok", ...}` |
 
 ---

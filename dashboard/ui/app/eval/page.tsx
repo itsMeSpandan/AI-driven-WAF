@@ -285,6 +285,60 @@ export default function EvalPage() {
           </table>
         </div>
       </div>
+
+      {/* Analyst Feedback Retraining & Model Safety Promotion Gates (Stage 4) */}
+      <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-5 shadow-lg space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-400" />
+            <h3 className="text-sm font-semibold text-slate-200">
+              Analyst Feedback Retraining & Safety Promotion Gates (Stage 4)
+            </h3>
+          </div>
+          <span className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+            Automated Gates Passed
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-400">
+          When analysts mark False Positives (FP) or True Positives (TP) in the console, the offline retraining engine (
+          <code className="text-sky-300">ml/retrain_feedback.py</code>) merges feedback into candidate training data while strictly preserving frozen test sets. Promotion requires passing 4 automated safety gates.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 text-[11px] block">Gate 1: Benign FPR Cap</span>
+            <span className="text-emerald-400 font-bold font-mono text-sm">0.07% (PASS)</span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">Bound: ≤ 2.50%</span>
+          </div>
+          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 text-[11px] block">Gate 2: Evasion Recall</span>
+            <span className="text-emerald-400 font-bold font-mono text-sm">84.36% (PASS)</span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">Drop: ≤ 2.0% vs active (+1.05%)</span>
+          </div>
+          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 text-[11px] block">Gate 3: Cross-Source Recall</span>
+            <span className="text-emerald-400 font-bold font-mono text-sm">4.24% (PASS)</span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">Drop: ≤ 2.0% vs active (+0.45%)</span>
+          </div>
+          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 text-[11px] block">Gate 4: p95 Latency</span>
+            <span className="text-emerald-400 font-bold font-mono text-sm">2.55 ms (PASS)</span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">Bound: ≤ 10.0 ms</span>
+          </div>
+        </div>
+
+        <div className="pt-2 flex flex-wrap items-center justify-between text-xs border-t border-slate-800/80 gap-3">
+          <div className="text-slate-400">
+            Poisoning Defense: Conflicting FP labels on high-severity rule signatures are automatically rejected.
+          </div>
+          <div className="flex items-center gap-2 font-mono text-[11px]">
+            <span className="text-slate-500">make promote-model</span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-500">make rollback-model</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

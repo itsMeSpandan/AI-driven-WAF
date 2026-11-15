@@ -1,18 +1,21 @@
-.PHONY: help up down logs test lint demo openapi seed clean data train
+.PHONY: help up down logs test lint demo openapi seed clean data train retrain-feedback promote-model rollback-model
 
 help:
 	@echo "AI-Driven WAF & Analytics Dashboard"
 	@echo "Available commands:"
-	@echo "  make up       - Start all docker-compose services"
-	@echo "  make down     - Stop all docker-compose services"
-	@echo "  make logs     - Tail logs from all docker containers"
-	@echo "  make test     - Run python unit & contract tests across components"
-	@echo "  make lint     - Run code quality linters (ruff / flake8 / black)"
-	@echo "  make demo     - Run attack simulator against the running local demo app"
-	@echo "  make openapi  - Export the OpenAPI JSON schema to docs/openapi.json"
-	@echo "  make seed     - Seed the database with synthetic telemetry"
-	@echo "  make data     - Download raw corpora and prepare processed splits"
-	@echo "  make train    - Train and evaluate models, export model.joblib"
+	@echo "  make up               - Start all docker-compose services"
+	@echo "  make down             - Stop all docker-compose services"
+	@echo "  make logs             - Tail logs from all docker containers"
+	@echo "  make test             - Run python unit & contract tests across components"
+	@echo "  make lint             - Run code quality linters (ruff / flake8 / black)"
+	@echo "  make demo             - Run attack simulator against the running local demo app"
+	@echo "  make openapi          - Export the OpenAPI JSON schema to docs/openapi.json"
+	@echo "  make seed             - Seed the database with synthetic telemetry"
+	@echo "  make data             - Download raw corpora and prepare processed splits"
+	@echo "  make train            - Train and evaluate models, export model.joblib"
+	@echo "  make retrain-feedback - Retrain candidate model on analyst feedback"
+	@echo "  make promote-model    - Promote verified candidate model to active detector"
+	@echo "  make rollback-model   - Roll back active detector to previous backup model"
 
 data:
 	python ml/data/download.py --dataset all
@@ -20,6 +23,15 @@ data:
 
 train:
 	python ml/train.py
+
+retrain-feedback:
+	python ml/retrain_feedback.py
+
+promote-model:
+	python ml/retrain_feedback.py --promote
+
+rollback-model:
+	python ml/retrain_feedback.py --rollback
 
 up:
 	docker compose up -d --build

@@ -47,6 +47,7 @@ def run_simulator(
     types: list[str],
     rate: float,
     override_safety: bool,
+    burst: bool = False,
 ) -> None:
     check_target_safety(target, override_safety)
 
@@ -72,23 +73,24 @@ def run_simulator(
             reader = csv.DictReader(f)
             evasion_b_payloads = [row["payload"] for row in reader if row.get("payload")]
 
-    delay_between_requests = 1.0 / rate if rate > 0 else 0.5
+    effective_count = count if not burst else max(count, 45)
+    delay_between_requests = (1.0 / rate if rate > 0 else 0.5) if not burst else 0.01
     target_clean = target.rstrip("/")
 
     print("==================================================================")
     print("           AI-Driven WAF — Attack & Telemetry Simulator            ")
     print("==================================================================")
     print(f" Target Gateway : {target_clean}")
-    print(f" Request Count  : {count}")
+    print(f" Request Count  : {effective_count} {'[BURST MODE ACTIVE]' if burst else ''}")
     print(f" Traffic Classes: {', '.join(types)}")
-    print(f" Rate (req/sec) : {rate} (delay ~{delay_between_requests:.2f}s)")
+    print(f" Rate (req/sec) : {'BURST (~100 rps)' if burst else f'{rate} (delay ~{delay_between_requests:.2f}s)'}")
     print("------------------------------------------------------------------\n")
 
-    results = {"total": 0, "blocked": 0, "allowed": 0, "errors": 0}
+    results = {"total": 0, "blocked": 0, "allowed": 0, "rate_limited": 0, "anomalies": 0, "errors": 0}
     latencies: list[float] = []
 
     with httpx.Client(timeout=10.0) as client:
-        for idx in range(1, count + 1):
+        for idx in range(1, effective_count + 1):
             chosen_type = random.choice(types)
             start_t = time.perf_counter()
 
@@ -118,7 +120,6 @@ def run_simulator(
 
                 elif chosen_type == "evasion_b":
                     payload = random.choice(evasion_b_payloads) if evasion_b_payloads else "%2527%2520OR%25201=1"
-                    # Payload is already obfuscated/encoded, transmit directly or path-escaped
                     url = f"{target_clean}/login?user={payload}"
                     resp = client.get(url)
 
@@ -130,26 +131,36 @@ def run_simulator(
                 latencies.append(elapsed_ms)
 
                 waf_verdict = resp.headers.get("x-waf-verdict", "unknown")
+                anomaly_flag = resp.headers.get("x-waf-anomaly", "")
                 req_id = resp.headers.get("x-waf-request-id", "none")[:8]
 
                 results["total"] += 1
-                if resp.status_code == 403 or waf_verdict == "block":
+                if anomaly_flag:
+                    results["anomalies"] += 1
+
+                if resp.status_code == 429:
+                    results["rate_limited"] += 1
+                    status_badge = "\033[93m[RATE-LIMITED 429]\033[0m"
+                elif resp.status_code == 403 or waf_verdict == "block":
                     results["blocked"] += 1
                     status_badge = "\033[91m[BLOCKED 403]\033[0m"
                 else:
                     results["allowed"] += 1
                     status_badge = "\033[92m[ALLOWED " + str(resp.status_code) + "]\033[0m"
 
+                anomaly_str = f" | \033[95mFLAG: {anomaly_flag}\033[0m" if anomaly_flag else ""
+
                 print(
-                    f"[{idx:03d}/{count:03d}] {chosen_type.upper():<7} -> {status_badge} "
-                    f"latency: {elapsed_ms:5.1f}ms | req_id: {req_id} | url: {url[:60]}"
+                    f"[{idx:03d}/{effective_count:03d}] {chosen_type.upper():<9} -> {status_badge} "
+                    f"latency: {elapsed_ms:5.1f}ms | req_id: {req_id}{anomaly_str}"
                 )
 
             except Exception as req_err:
                 results["errors"] += 1
-                print(f"[{idx:03d}/{count:03d}] {chosen_type.upper():<7} -> [ERROR] {req_err}")
+                print(f"[{idx:03d}/{effective_count:03d}] {chosen_type.upper():<9} -> [ERROR] {req_err}")
 
-            time.sleep(delay_between_requests)
+            if delay_between_requests > 0:
+                time.sleep(delay_between_requests)
 
     # Print Summary Table
     avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
@@ -191,6 +202,11 @@ def main():
         help="Transmit rate in requests per second (default: 2.0)",
     )
     parser.add_argument(
+        "--burst",
+        action="store_true",
+        help="Simulate high-frequency burst traffic to trigger rate anomaly detection.",
+    )
+    parser.add_argument(
         "--i-own-this-target",
         action="store_true",
         help="Explicit confirmation allowing simulation against non-local authorized targets.",
@@ -204,6 +220,7 @@ def main():
         types=active_types,
         rate=args.rate,
         override_safety=args.i_own_this_target,
+        burst=args.burst,
     )
 
 

@@ -16,8 +16,10 @@ if str(REPO_ROOT) not in sys.path:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from dashboard.api.routes.auth import router as auth_router
 from dashboard.api.routes.config import router as config_router
 from dashboard.api.routes.events import router as events_router
+from dashboard.api.routes.feedback import router as feedback_router
 from dashboard.api.routes.stats import router as stats_router
 from dashboard.api.routes.stream import router as stream_router
 from gateway.models import init_db
@@ -53,8 +55,10 @@ app.add_middleware(
 )
 
 # Mount API routers
+app.include_router(auth_router)
 app.include_router(stats_router)
 app.include_router(events_router)
+app.include_router(feedback_router)
 app.include_router(stream_router)
 app.include_router(config_router)
 

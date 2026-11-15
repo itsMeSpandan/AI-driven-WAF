@@ -30,6 +30,7 @@ from gateway.masking import mask_body_summary, mask_query_string
 from gateway.models import Event, get_engine, init_db
 from gateway.normalizer import normalise_request
 from gateway.pipeline import decide, ml_score, rule_check
+from gateway.rate_limiter import limiter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -142,6 +143,31 @@ BLOCK_HTML_TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
+RATE_LIMIT_HTML_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>429 Too Many Requests - Rate Limit Exceeded</title>
+  <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }}
+    .card {{ background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 2.5rem; max-width: 480px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }}
+    h1 {{ color: #f59e0b; margin: 0 0 1rem 0; font-size: 1.75rem; }}
+    p {{ color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }}
+    .id-badge {{ background: #0f172a; border: 1px dashed #475569; padding: 0.75rem 1rem; border-radius: 6px; font-family: monospace; color: #38bdf8; font-size: 0.875rem; word-break: break-all; margin-bottom: 1.5rem; }}
+    .footer {{ font-size: 0.8rem; color: #64748b; }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>429 Too Many Requests</h1>
+    <p>Rate limit or traffic burst threshold exceeded. Please throttle request rates.</p>
+    <div class="id-badge">Request ID: {request_id}</div>
+    <div class="footer">If you believe this is in error, contact your security administrator.</div>
+  </div>
+</body>
+</html>
+"""
+
 # Asynchronous log queue & HTTP client
 log_queue: asyncio.Queue = asyncio.Queue(maxsize=settings.log_queue_max_size)
 http_client: Optional[httpx.AsyncClient] = None
@@ -239,12 +265,11 @@ async def healthz():
 async def proxy_catch_all(request: Request, path: str):
     start_time = time.perf_counter()
     request_id = str(uuid.uuid4())
-    client_ip = request.client.host if request.client else "127.0.0.1"
+    peer_ip = request.client.host if request.client else "127.0.0.1"
 
-    # Forwarded-For handling
+    # Forwarded-For handling with trusted proxy verification (prevents IP spoofing)
     x_forwarded_for = request.headers.get("x-forwarded-for")
-    if x_forwarded_for:
-        client_ip = x_forwarded_for.split(",")[0].strip()
+    client_ip = limiter.resolve_client_ip(peer_ip, x_forwarded_for)
 
     raw_query = request.url.query
     raw_body = await request.body()
@@ -252,6 +277,61 @@ async def proxy_catch_all(request: Request, path: str):
 
     curr_mode = get_current_mode()
     curr_threshold = get_current_threshold()
+    runtime_cfg = get_runtime_config()
+
+    # Per-IP rate anomaly and burst check
+    rate_enabled = runtime_cfg.get("rate_limit_enabled", "true").lower() in ("true", "1", "yes")
+    rate_window = int(runtime_cfg.get("rate_limit_window_sec", "10"))
+    rate_burst = int(runtime_cfg.get("rate_limit_burst", "30"))
+    rate_enforce = runtime_cfg.get("rate_enforce", "false").lower() in ("true", "1", "yes")
+
+    rate_res = limiter.check_request(
+        client_ip=client_ip,
+        path=f"/{path}",
+        window_sec=rate_window,
+        burst_threshold=rate_burst,
+        rate_enforce=rate_enforce,
+        enabled=rate_enabled,
+    )
+
+    # If rate enforcement is enabled and burst threshold exceeded -> HTTP 429
+    if rate_res.should_block_429:
+        latency_ms = (time.perf_counter() - start_time) * 1000.0
+        event_payload = {
+            "id": request_id,
+            "client_ip": client_ip,
+            "method": request.method,
+            "path": f"/{path}",
+            "query_summary": mask_query_string(raw_query),
+            "body_summary": "",
+            "user_agent": user_agent,
+            "rule_hit": "RATE_BURST_EXCEEDED",
+            "ml_score": 1.0,
+            "verdict": "block",
+            "attack_type": "rate_burst",
+            "latency_ms": round(latency_ms, 2),
+            "explanation": {
+                "summary": f"Rate burst exceeded: {rate_res.current_rate} reqs in {rate_window}s window (limit {rate_burst})",
+                "anomaly_flag": rate_res.anomaly_flag,
+            },
+            "model_version": getattr(detector, "model_version", "none"),
+            "anomaly_flag": rate_res.anomaly_flag,
+        }
+        try:
+            log_queue.put_nowait(event_payload)
+        except asyncio.QueueFull:
+            logger.warning("Log queue full; dropped event %s", request_id)
+
+        return HTMLResponse(
+            status_code=429,
+            content=RATE_LIMIT_HTML_TEMPLATE.format(request_id=request_id),
+            headers={
+                "X-WAF-Request-ID": request_id,
+                "X-WAF-Verdict": "block",
+                "X-WAF-Anomaly": rate_res.anomaly_flag or "rate_burst",
+                "Retry-After": str(rate_window),
+            },
+        )
 
     # 1. Normalise & Inspect
     try:
@@ -316,6 +396,7 @@ async def proxy_catch_all(request: Request, path: str):
         "latency_ms": round(latency_ms, 2),
         "explanation": verdict.explanation,
         "model_version": verdict.model_version,
+        "anomaly_flag": rate_res.anomaly_flag,
     }
 
     try:
@@ -325,10 +406,14 @@ async def proxy_catch_all(request: Request, path: str):
 
     # 5. Enforcement: Block verdict returns HTTP 403
     if verdict.action == "block":
+        limiter.record_block(client_ip)
+        headers = {"X-WAF-Request-ID": request_id, "X-WAF-Verdict": "block"}
+        if rate_res.anomaly_flag:
+            headers["X-WAF-Anomaly"] = rate_res.anomaly_flag
         return HTMLResponse(
             status_code=403,
             content=BLOCK_HTML_TEMPLATE.format(request_id=request_id),
-            headers={"X-WAF-Request-ID": request_id, "X-WAF-Verdict": "block"},
+            headers=headers,
         )
 
     # 6. Forwarding: Stream to upstream
@@ -339,6 +424,8 @@ async def proxy_catch_all(request: Request, path: str):
 
     fwd_headers["x-forwarded-for"] = client_ip
     fwd_headers["x-waf-request-id"] = request_id
+    if rate_res.anomaly_flag:
+        fwd_headers["x-waf-anomaly"] = rate_res.anomaly_flag
 
     upstream_base = settings.upstream_url.rstrip("/")
     target_url = f"{upstream_base}/{path}"

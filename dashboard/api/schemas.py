@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SummaryStatsResponse(BaseModel):
@@ -80,6 +80,7 @@ class EventListItem(BaseModel):
     latency_ms: float
     feedback: Optional[str] = None
     model_version: Optional[str] = "none"
+    anomaly_flag: Optional[str] = None
 
 
 class EventsListResponse(BaseModel):
@@ -95,7 +96,7 @@ class EventDetailResponse(EventListItem):
 
 
 class FeedbackRequest(BaseModel):
-    feedback: Literal["fp", "tp"] = Field(..., description="'fp' for false positive, 'tp' for true positive")
+    feedback: Literal["fp", "tp", "clear"] = Field(..., description="'fp' for false positive, 'tp' for true positive, 'clear' to reset")
     notes: Optional[str] = Field(None, description="Optional analyst comment or justification")
 
 
@@ -105,8 +106,75 @@ class FeedbackResponse(BaseModel):
     feedback: str
 
 
+class FeedbackExportItem(BaseModel):
+    id: str
+    event_id: str
+    ts: datetime
+    analyst: str
+    label: str
+    notes: Optional[str] = None
+    model_version: Optional[str] = None
+    canonical_text: Optional[str] = None
+
+
+class FeedbackExportResponse(BaseModel):
+    total: int
+    items: List[FeedbackExportItem]
+
+
 class WAFConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     waf_mode: Literal["monitor", "block"] = Field("block", description="Operating mode")
-    ml_threshold: float = Field(0.75, ge=0.0, le=1.0, description="ML anomaly trigger threshold")
+    ml_threshold: float = Field(0.94, ge=0.0, le=1.0, description="ML anomaly trigger threshold")
     max_body_inspect_bytes: int = Field(16384, ge=512, le=1048576, description="Inspection cap in bytes")
     fail_mode: Literal["open", "closed"] = Field("closed", description="Fail open or closed on fatal error")
+    rate_limit_enabled: bool = Field(True, description="Enable sliding window rate anomaly detection")
+    rate_limit_window_sec: int = Field(10, ge=1, le=300, description="Sliding window duration in seconds")
+    rate_limit_burst: int = Field(30, ge=1, le=1000, description="Max requests permitted in window before flagging")
+    rate_enforce: bool = Field(False, description="Actively reject burst traffic with HTTP 429 when True")
+
+
+class ConfigAuditItem(BaseModel):
+    id: int
+    ts: datetime
+    actor: str
+    key: str
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+
+
+class ConfigAuditResponse(BaseModel):
+    total: int
+    items: List[ConfigAuditItem]
+
+
+class ThresholdSweepPoint(BaseModel):
+    threshold: float
+    fpr: float
+    recall: float
+    f1: float
+
+
+class ThresholdSweepResponse(BaseModel):
+    active_threshold: float
+    suggested_threshold: float
+    points: List[ThresholdSweepPoint]
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in_sec: int
+    username: str
+
+
+class UserResponse(BaseModel):
+    username: str
+    authenticated: bool
+    role: str = "admin"
