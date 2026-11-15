@@ -177,58 +177,23 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto text-slate-100">
-      {/* Top Navigation Bar */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 shadow-md shadow-sky-500/20">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-extrabold tracking-tight text-white">
-                AI-Driven WAF
-              </h1>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 text-sky-400">
-                SecOps Console
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">
-              L7 Reverse-Proxy Inspection & Machine Learning Anomaly Detection
-            </p>
-          </div>
+    <div className="min-h-screen bg-bg text-ink">
+      {/* Top Navigation Bar: Monolith Full-Width Black Strip */}
+      <header className="w-full bg-ink text-white px-6 sm:px-10 py-3.5 flex flex-col md:flex-row md:items-center justify-between border-b border-ink gap-4 on-dark">
+        <div className="flex items-center">
+          <span className="font-mono font-medium text-[13px] tracking-[0.06em] text-white uppercase">
+            WAF / CONSOLE
+          </span>
         </div>
 
         {/* Action Controls & Top Navigation */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Active Mode Pill */}
-          {config && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-              <span className="text-slate-400">Mode:</span>
-              <span
-                className={`font-bold uppercase tracking-wider ${
-                  config.waf_mode === "block"
-                    ? "text-rose-400"
-                    : "text-amber-400"
-                }`}
-              >
-                {config.waf_mode}
-              </span>
-              <span className="text-slate-600">|</span>
-              <span className="text-slate-400">Thresh:</span>
-              <span className="font-mono text-sky-400 font-bold">
-                {config.ml_threshold}
-              </span>
-            </div>
-          )}
-
+        <div className="flex items-center gap-5 flex-wrap">
           {/* Model / Eval Link */}
           <Link
             href="/eval"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            className="font-mono text-[13px] text-on-dark-muted hover:text-white transition-colors"
           >
-            <Cpu className="w-3.5 h-3.5 text-sky-400" />
-            <span>Model / Eval</span>
+            Model / Eval
           </Link>
 
           {/* API Docs Link */}
@@ -236,22 +201,21 @@ export default function DashboardPage() {
             href={`${API_BASE}/docs`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            className="font-mono text-[13px] text-on-dark-muted hover:text-white transition-colors"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-            <span>API Docs</span>
+            API docs
           </a>
 
           {/* Global Time Range Selector */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
+          <div className="flex items-center gap-2.5 font-mono text-[13px]">
             {["5m", "1h", "24h", "7d"].map((r) => (
               <button
                 key={r}
                 onClick={() => setTimeRange(r)}
-                className={`px-2.5 py-1 rounded font-medium transition-colors ${
+                className={`transition-colors ${
                   timeRange === r
-                    ? "bg-slate-800 text-white font-bold"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "text-white font-bold underline underline-offset-4 decoration-2"
+                    : "text-on-dark-muted hover:text-white"
                 }`}
               >
                 {r}
@@ -259,78 +223,66 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Auto-Refresh Toggle Pill */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 gap-2 text-xs">
+          {/* Active Mode & Threshold readout */}
+          {config && (
+            <span className="font-mono text-[13px] text-white">
+              {config.waf_mode.toUpperCase()} &middot; {config.ml_threshold}
+            </span>
+          )}
+
+          {/* Auto-Refresh readout & manual trigger */}
+          <div className="flex items-center gap-1.5 font-mono text-[12px] text-on-dark-muted">
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className="flex items-center gap-1 text-slate-300 hover:text-white"
+              className="hover:text-white transition-colors"
               title={autoRefresh ? "Pause auto-refresh" : "Resume auto-refresh"}
             >
-              {autoRefresh ? (
-                <>
-                  <Pause className="w-3 h-3 text-amber-400" />
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    {nextRefreshIn}s
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3 h-3 text-emerald-400" />
-                  <span className="text-[11px] text-amber-400 font-semibold">
-                    PAUSED
-                  </span>
-                </>
-              )}
+              {autoRefresh ? `${nextRefreshIn}s` : "PAUSED"}
             </button>
             <button
               onClick={() => loadAllData(false)}
-              className="text-slate-400 hover:text-white"
+              className="hover:text-white transition-colors px-1"
               title="Refresh Telemetry Now"
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`}
+                className={`w-3 h-3 inline ${refreshing ? "animate-spin" : ""}`}
               />
             </button>
           </div>
 
-          {/* Auth Status & User Pill */}
+          {/* Auth Status & User */}
           {currentUser ? (
-            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-              <User className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-mono text-slate-200 font-semibold">
-                {currentUser.username}
-              </span>
+            <div className="flex items-center gap-2 font-mono text-[13px]">
+              <span className="text-white">{currentUser.username}</span>
               <button
                 onClick={handleLogout}
-                className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors"
+                className="text-on-dark-muted hover:text-white text-[12px] underline"
                 title="Sign out of SecOps session"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                logout
               </button>
             </div>
           ) : (
             <button
               onClick={() => setLoginModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              className="font-mono text-[13px] text-on-dark-muted hover:text-white transition-colors"
             >
-              <Lock className="w-3.5 h-3.5 text-sky-400" />
-              <span>Login</span>
+              Login
             </button>
           )}
 
-          {/* Settings Button */}
+          {/* Configure WAF Button */}
           <button
             onClick={() => setSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-semibold shadow-md shadow-sky-500/20 transition-all"
+            className="bg-white text-ink font-mono text-[13px] font-medium px-3.5 py-1.5 hover:bg-[#e9e9e6] transition-colors cursor-pointer border-0"
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Configure WAF</span>
+            Configure WAF
           </button>
         </div>
       </header>
 
-      {/* Main Content Sections */}
-      <main className="mt-6 space-y-6">
+      {/* Main Content Container: max-w-[1280px], grid gap 12px */}
+      <main className="max-w-[1280px] mx-auto px-6 sm:px-10 py-7 space-y-3">
         {/* KPI Cards Row */}
         <KPICards stats={stats} loading={loading} />
 

@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Activity, ShieldAlert, ShieldCheck, Clock, Percent } from "lucide-react";
 import { SummaryStats } from "@/lib/api";
+import { Tile } from "@/components/monolith/ui";
 
 interface KPICardsProps {
   stats: SummaryStats | null;
@@ -12,91 +12,65 @@ interface KPICardsProps {
 export function KPICards({ stats, loading }: KPICardsProps) {
   if (loading || !stats) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className="h-28 rounded-xl bg-slate-900/60 border border-slate-800/80 animate-pulse p-4"
-          />
+            className="h-[120px] bg-panel border border-ink p-4 flex flex-col justify-between"
+          >
+            <div className="h-3 w-20 bg-hair" />
+            <div className="h-8 w-28 bg-hair my-2" />
+            <div className="h-3 w-24 bg-hair" />
+          </div>
         ))}
       </div>
     );
   }
 
-  const cards = [
+  const items = [
     {
-      title: "Total Requests",
+      label: "TOTAL REQUESTS",
       value: stats.total_requests.toLocaleString(),
-      sub: `${stats.total_allowed.toLocaleString()} allowed`,
-      icon: Activity,
-      color: "text-sky-400",
-      bg: "bg-sky-500/10",
-      border: "border-sky-500/20",
+      sublabel: `${stats.total_allowed.toLocaleString()} ALLOWED`,
+      inverted: false,
     },
     {
-      title: "Blocked Threats",
+      label: "BLOCKED",
       value: stats.total_blocked.toLocaleString(),
-      sub: "Active blocks (403)",
-      icon: ShieldAlert,
-      color: "text-rose-400",
-      bg: "bg-rose-500/10",
-      border: "border-rose-500/20",
+      sublabel: "ACTIVE BLOCKS (403)",
+      inverted: true,
     },
     {
-      title: "Flagged Requests",
+      label: "FLAGGED",
       value: stats.total_flagged.toLocaleString(),
-      sub: "Monitor mode tags",
-      icon: ShieldCheck,
-      color: "text-amber-400",
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/20",
+      sublabel: "MONITOR-MODE TAGS",
+      inverted: false,
     },
     {
-      title: "Block Rate",
+      label: "BLOCK RATE",
       value: `${stats.block_rate}%`,
-      sub: "Threat ratio",
-      icon: Percent,
-      color: "text-emerald-400",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20",
+      sublabel: "THREAT RATIO",
+      inverted: false,
     },
     {
-      title: "Avg Latency",
+      label: "AVG LATENCY",
       value: `${stats.avg_latency_ms} ms`,
-      sub: "Target: p95 < 25ms",
-      icon: Clock,
-      color: "text-indigo-400",
-      bg: "bg-indigo-500/10",
-      border: "border-indigo-500/20",
+      sublabel: "TARGET P95 UNDER 25 MS",
+      inverted: false,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      {cards.map((c, idx) => {
-        const Icon = c.icon;
-        return (
-          <div
-            key={idx}
-            className="relative overflow-hidden rounded-xl bg-slate-900/80 border border-slate-800 p-5 shadow-lg backdrop-blur-sm transition-all hover:border-slate-700"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-                {c.title}
-              </span>
-              <div className={`p-2 rounded-lg ${c.bg} ${c.border} border`}>
-                <Icon className={`w-4 h-4 ${c.color}`} />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl font-bold tracking-tight text-white">
-                {c.value}
-              </div>
-              <div className="mt-1 text-xs text-slate-400">{c.sub}</div>
-            </div>
-          </div>
-        );
-      })}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      {items.map((item, idx) => (
+        <Tile
+          key={idx}
+          label={item.label}
+          value={item.value}
+          sublabel={item.sublabel}
+          inverted={item.inverted}
+        />
+      ))}
     </div>
   );
 }
