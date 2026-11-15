@@ -3,33 +3,92 @@
 @tailwind utilities;
 
 :root {
-  --foreground: #f8fafc;
-  --background: #090d16;
+  --bg: #e9e9e6;
+  --panel: #ffffff;
+  --ink: #111111;
+  --muted: #555555;
+  --hair: #d6d6d2;
+  --zebra: #f4f4f2;
+  --hover: #e9e9e6;
+  --on-dark-muted: #c4c4c0;
+  --grid: #e1e1de;
+
+  /* Chart palette tokens */
+  --chart-traffic: #1d4ed8;
+  --chart-threat: #ea580c;
+  --chart-sqli: #ea580c;
+  --chart-anomaly: #1d4ed8;
+  --chart-xss: #0f766e;
+  --chart-path: #a16207;
+  --chart-cmdi: #7c2d12;
+  --chart-other: #6b7280;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ibm-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.45;
+  font-size: 14px;
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-/* Custom scrollbars for secops dark look */
+/* Monospace font utility */
+.font-mono {
+  font-family: var(--font-ibm-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Explicit focus outlines */
+:focus-visible {
+  outline: 2px solid var(--ink) !important;
+  outline-offset: 2px !important;
+}
+
+.on-dark :focus-visible,
+[data-dark="true"] :focus-visible {
+  outline: 2px solid #ffffff !important;
+  outline-offset: 2px !important;
+}
+
+/* Accessible reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Minimalist scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
+  background: var(--hair);
+  border: 1px solid var(--ink);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--muted);
 }
