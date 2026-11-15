@@ -13,6 +13,8 @@ RUN pip install --no-cache-dir -r gateway/requirements.txt
 
 # Copy application files
 COPY gateway/ ./gateway/
+COPY waf_common/ ./waf_common/
+COPY ml/ ./ml/
 COPY dashboard/api/ ./dashboard/api/
 COPY docs/ ./docs/
 
