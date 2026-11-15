@@ -94,7 +94,27 @@ export function LiveAlertFeed({
   // Multi-facet filtering
   const filtered = events.filter((ev) => {
     if (filterVerdict !== "all" && ev.verdict !== filterVerdict) return false;
-    if (filterAttackType !== "all" && ev.attack_type.toLowerCase() !== filterAttackType.toLowerCase()) return false;
+    if (filterAttackType !== "all") {
+      const selected = filterAttackType.toLowerCase();
+      const evType = (ev.attack_type || "").toLowerCase();
+      if (selected === "cmd_injection" || selected === "rce" || selected === "cmdi") {
+        if (!evType.includes("cmd") && !evType.includes("rce")) return false;
+      } else if (selected === "scanner") {
+        if (!evType.includes("scan")) return false;
+      } else if (selected === "ml_anomaly") {
+        if (!evType.includes("ml") && !evType.includes("anomaly")) return false;
+      } else if (selected === "path_traversal") {
+        if (!evType.includes("path") && !evType.includes("traversal")) return false;
+      } else if (selected === "sqli") {
+        if (!evType.includes("sql")) return false;
+      } else if (selected === "xss") {
+        if (!evType.includes("xss")) return false;
+      } else if (selected === "benign") {
+        if (evType !== "benign") return false;
+      } else if (evType !== selected) {
+        return false;
+      }
+    }
     if (filterAnomaly !== "all" && ev.anomaly_flag !== filterAnomaly) return false;
     if (filterFeedback === "unlabeled" && ev.feedback) return false;
     if (filterFeedback === "fp" && ev.feedback !== "fp") return false;
@@ -192,7 +212,8 @@ export function LiveAlertFeed({
           <option value="sqli">SQLi</option>
           <option value="xss">XSS</option>
           <option value="path_traversal">PATH TRAVERSAL</option>
-          <option value="rce">COMMAND INJECTION</option>
+          <option value="cmd_injection">COMMAND INJECTION</option>
+          <option value="ml_anomaly">ML ANOMALY</option>
           <option value="scanner">SCANNER PROBE</option>
           <option value="benign">BENIGN ONLY</option>
         </select>
