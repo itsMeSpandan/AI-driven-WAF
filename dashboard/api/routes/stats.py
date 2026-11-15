@@ -89,27 +89,28 @@ def get_timeseries(
     bucket: str = Query("1h", description="Bucket size: 1m, 5m, 1h"),
     db: Session = Depends(get_db),
 ):
-    since = datetime.now(timezone.utc) - parse_range(range)
+    now_utc = datetime.now(timezone.utc)
+    since = now_utc - parse_range(range)
+    since_naive = since.replace(tzinfo=None)
 
     # Fetch relevant events in range ordered by timestamp
     events = (
         db.query(Event.ts, Event.verdict)
-        .filter(Event.ts >= since)
+        .filter(Event.ts >= since_naive)
         .order_by(Event.ts.asc())
         .all()
     )
 
     # Bin into intervals
     bucket_delta = parse_range(bucket)
-    # Ensure minimum bucket interval
     if bucket_delta.total_seconds() < 60:
         bucket_delta = timedelta(minutes=1)
+    bucket_secs = int(bucket_delta.total_seconds())
 
-    # Generate bucket keys
+    # Generate fixed chronological bucket keys from since up to now
     points_dict = {}
     current = since
-    now = datetime.now(timezone.utc)
-    while current <= now:
+    while current <= now_utc:
         bucket_key = current.strftime("%Y-%m-%dT%H:%M:00Z")
         points_dict[bucket_key] = {"total": 0, "threats": 0, "blocked": 0, "flagged": 0}
         current += bucket_delta
@@ -117,19 +118,25 @@ def get_timeseries(
     for ev_ts, verdict in events:
         if ev_ts is None:
             continue
-        # Floor timestamp to bucket
-        epoch = ev_ts.replace(second=0, microsecond=0)
-        bucket_key = epoch.strftime("%Y-%m-%dT%H:%M:00Z")
-        if bucket_key not in points_dict:
-            points_dict[bucket_key] = {"total": 0, "threats": 0, "blocked": 0, "flagged": 0}
+        if ev_ts.tzinfo is None:
+            ev_ts = ev_ts.replace(tzinfo=timezone.utc)
+        if ev_ts < since:
+            continue
 
-        points_dict[bucket_key]["total"] += 1
-        if verdict in ("block", "flag"):
-            points_dict[bucket_key]["threats"] += 1
-            if verdict == "block":
-                points_dict[bucket_key]["blocked"] += 1
-            elif verdict == "flag":
-                points_dict[bucket_key]["flagged"] += 1
+        # Floor into the correct bucket interval without creating unaligned keys
+        elapsed = (ev_ts - since).total_seconds()
+        bucket_idx = int(elapsed // bucket_secs)
+        bucket_time = since + timedelta(seconds=bucket_idx * bucket_secs)
+        bucket_key = bucket_time.strftime("%Y-%m-%dT%H:%M:00Z")
+
+        if bucket_key in points_dict:
+            points_dict[bucket_key]["total"] += 1
+            if verdict in ("block", "flag"):
+                points_dict[bucket_key]["threats"] += 1
+                if verdict == "block":
+                    points_dict[bucket_key]["blocked"] += 1
+                elif verdict == "flag":
+                    points_dict[bucket_key]["flagged"] += 1
 
     sorted_points = [
         TimeSeriesPoint(

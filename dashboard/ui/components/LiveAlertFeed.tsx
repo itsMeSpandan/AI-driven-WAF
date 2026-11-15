@@ -21,6 +21,24 @@ interface LiveAlertFeedProps {
   onSelectEvent: (event: EventItem) => void;
 }
 
+function formatLocalTime(ts: string | undefined): string {
+  if (!ts) return "--:--:--";
+  try {
+    const utcIso =
+      ts.includes("Z") || ts.includes("+") ? ts : ts.replace(" ", "T") + "Z";
+    const date = new Date(utcIso);
+    if (isNaN(date.getTime())) return ts.slice(11, 19);
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return ts.slice(11, 19);
+  }
+}
+
 export function LiveAlertFeed({
   initialEvents,
   onSelectEvent,
@@ -295,8 +313,8 @@ export function LiveAlertFeed({
                       className="hover:bg-slate-800/40 cursor-pointer transition-colors"
                       onClick={() => onSelectEvent(ev)}
                     >
-                      <td className="py-2 px-3 text-slate-400 text-[11px] whitespace-nowrap">
-                        {ev.ts ? ev.ts.slice(11, 19) : "--:--:--"}
+                      <td className="py-2 px-3 text-slate-400 text-[11px] whitespace-nowrap" title={ev.ts}>
+                        {formatLocalTime(ev.ts)}
                       </td>
                       <td className="py-2 px-3 whitespace-nowrap">
                         <span

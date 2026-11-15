@@ -343,6 +343,37 @@ export function RequestDetailDrawer({
 
                 <div>
                   <span className="text-slate-500 block text-[10px] font-sans">
+                    Timestamp
+                  </span>
+                  <div className="text-slate-300 text-[11px]">
+                    {event.ts ? (
+                      <>
+                        <span className="text-slate-200 font-sans">
+                          {(() => {
+                            try {
+                              const utcIso =
+                                event.ts.includes("Z") || event.ts.includes("+")
+                                  ? event.ts
+                                  : event.ts.replace(" ", "T") + "Z";
+                              const d = new Date(utcIso);
+                              return isNaN(d.getTime()) ? event.ts : d.toLocaleString();
+                            } catch {
+                              return event.ts;
+                            }
+                          })()}
+                        </span>
+                        <span className="text-slate-500 ml-2 font-mono text-[10px]">
+                          ({event.ts} UTC)
+                        </span>
+                      </>
+                    ) : (
+                      "N/A"
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-sans">
                     Client IP & Agent
                   </span>
                   <div className="text-slate-400 text-[11px]">

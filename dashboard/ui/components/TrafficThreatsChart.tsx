@@ -19,6 +19,24 @@ interface TrafficThreatsChartProps {
   loading: boolean;
 }
 
+function parseLocalTime(isoString: string): string {
+  try {
+    const utcIso =
+      isoString.includes("Z") || isoString.includes("+")
+        ? isoString
+        : isoString.replace(" ", "T") + "Z";
+    const date = new Date(utcIso);
+    if (isNaN(date.getTime())) return isoString.slice(11, 16);
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return isoString.slice(11, 16);
+  }
+}
+
 export function TrafficThreatsChart({
   data,
   range,
@@ -27,7 +45,7 @@ export function TrafficThreatsChart({
 }: TrafficThreatsChartProps) {
   const formattedData = data.map((d) => ({
     ...d,
-    time: d.timestamp.slice(11, 16),
+    time: parseLocalTime(d.timestamp),
   }));
 
   return (
@@ -90,6 +108,30 @@ export function TrafficThreatsChart({
                   borderRadius: "8px",
                   color: "#f8fafc",
                   fontSize: "12px",
+                }}
+                labelFormatter={(label, payload) => {
+                  if (payload && payload.length > 0 && payload[0].payload?.timestamp) {
+                    const iso = payload[0].payload.timestamp;
+                    try {
+                      const utcIso =
+                        iso.includes("Z") || iso.includes("+")
+                          ? iso
+                          : iso.replace(" ", "T") + "Z";
+                      const date = new Date(utcIso);
+                      if (!isNaN(date.getTime())) {
+                        return date.toLocaleString([], {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        });
+                      }
+                    } catch {
+                      // Fallback to formatted tick
+                    }
+                  }
+                  return label;
                 }}
               />
               <Area
