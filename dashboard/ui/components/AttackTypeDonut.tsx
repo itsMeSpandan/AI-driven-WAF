@@ -1,10 +1,8 @@
 "use client";
 
 import React from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { AttackTypeItem } from "@/lib/api";
-
-const COLORS = ["#f43f5e", "#fbbf24", "#38bdf8", "#a855f7", "#ec4899"];
+import { getAttackColor, getAttackLabel } from "@/lib/chart-colors";
 
 interface AttackTypeDonutProps {
   data: AttackTypeItem[];
@@ -12,76 +10,71 @@ interface AttackTypeDonutProps {
 }
 
 export function AttackTypeDonut({ data, loading }: AttackTypeDonutProps) {
-  const chartData = data.map((d) => ({
-    name: d.attack_type.toUpperCase(),
-    value: d.count,
-    percentage: d.percentage,
-  }));
-
-  const total = chartData.reduce((acc, cur) => acc + cur.value, 0);
+  const total = data.reduce((acc, cur) => acc + cur.count, 0);
 
   return (
-    <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-5 shadow-lg flex flex-col justify-between">
-      <div className="pb-3 border-b border-slate-800/80">
-        <h3 className="text-sm font-semibold text-slate-200">
-          Attack Breakdown
-        </h3>
-        <p className="text-xs text-slate-400">Threat distribution by payload class</p>
+    <div className="bg-panel border border-ink flex flex-col justify-between h-full">
+      {/* Header Strip */}
+      <div className="px-4 py-2.5 border-b border-ink font-mono text-[11px] uppercase tracking-[0.06em] font-semibold text-ink">
+        ATTACK BREAKDOWN
       </div>
 
-      <div className="h-56 mt-2 relative">
+      <div className="p-4 flex-1 flex flex-col justify-start">
         {loading ? (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500 animate-pulse">
-            Loading attack metrics...
+          <div className="h-48 flex items-center justify-center font-mono text-xs text-muted">
+            LOADING ATTACK METRICS...
           </div>
-        ) : chartData.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500">
-            No attacks recorded yet
+        ) : data.length === 0 ? (
+          <div className="h-48 flex items-center justify-center font-mono text-xs text-muted">
+            NO ATTACKS RECORDED YET.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                innerRadius={55}
-                outerRadius={80}
-                paddingAngle={4}
-                dataKey="value"
-              >
-                {chartData.map((_, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
+          <>
+            {/* 100% Horizontal Stacked Bar (34px high) */}
+            <div className="h-[34px] w-full flex border border-ink bg-zebra overflow-hidden">
+              {data.map((item, idx) => {
+                const color = getAttackColor(item.attack_type);
+                const pct = total > 0 ? (item.count / total) * 100 : item.percentage;
+                if (pct <= 0) return null;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: color,
+                    }}
+                    title={`${getAttackLabel(item.attack_type)}: ${item.count} (${item.percentage}%)`}
+                    className="h-full border-r border-ink last:border-r-0"
                   />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0f172a",
-                  borderColor: "#334155",
-                  borderRadius: "8px",
-                  color: "#f8fafc",
-                  fontSize: "12px",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+                );
+              })}
+            </div>
 
-      <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800/80">
-        {chartData.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-2 text-xs">
-            <span
-              className="w-2.5 h-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: COLORS[idx % COLORS.length] }}
-            />
-            <span className="text-slate-400 truncate">{item.name}</span>
-            <span className="text-slate-200 font-semibold ml-auto">
-              {item.percentage}%
-            </span>
-          </div>
-        ))}
+            {/* List of Breakdown Rows */}
+            <div className="mt-3 divide-y divide-hair">
+              {data.map((item, idx) => {
+                const color = getAttackColor(item.attack_type);
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between py-2 font-mono text-[12px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 shrink-0 inline-block border border-ink"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="text-ink">{getAttackLabel(item.attack_type)}</span>
+                    </div>
+                    <span className="text-muted">
+                      {item.count} &middot; {item.percentage}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

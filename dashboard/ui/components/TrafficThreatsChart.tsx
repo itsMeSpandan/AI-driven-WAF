@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TimeSeriesPoint } from "@/lib/api";
+import { TRAFFIC_COLOR, THREAT_COLOR } from "@/lib/chart-colors";
 
 interface TrafficThreatsChartProps {
   data: TimeSeriesPoint[];
@@ -49,65 +50,79 @@ export function TrafficThreatsChart({
   }));
 
   return (
-    <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-5 shadow-lg">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800/80 gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-200">
-            Traffic vs Threats
-          </h3>
-          <p className="text-xs text-slate-400">
-            Total request volume compared against detected threats
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 bg-slate-950/60 p-1 rounded-lg border border-slate-800 self-start sm:self-auto">
+    <div className="bg-panel border border-ink">
+      {/* Header Strip */}
+      <div className="px-4 py-2.5 border-b border-ink flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.06em]">
+        <span className="font-semibold text-ink">
+          TRAFFIC VS THREATS &middot; {range.toUpperCase()}
+        </span>
+        <div className="flex items-center gap-3">
           {["1h", "24h", "7d"].map((r) => (
             <button
               key={r}
               onClick={() => onRangeChange(r)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+              className={`transition-colors font-mono text-[11px] uppercase ${
                 range === r
-                  ? "bg-sky-500 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "text-ink font-bold underline underline-offset-4 decoration-2"
+                  : "text-muted hover:text-ink"
               }`}
             >
-              {r.toUpperCase()}
+              {r}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="h-72 mt-4 w-full">
+      <div className="p-4 h-72 w-full">
         {loading ? (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500 animate-pulse">
-            Loading telemetry time series...
+          <div className="h-full flex items-center justify-center font-mono text-xs text-muted">
+            LOADING TELEMETRY TIME SERIES...
           </div>
         ) : formattedData.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500">
-            No telemetry recorded in this range.
+          <div className="h-full flex items-center justify-center font-mono text-xs text-muted">
+            NO TELEMETRY RECORDED IN THIS RANGE.
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={formattedData}>
-              <defs>
-                <linearGradient id="totalGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="threatGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="time" stroke="#64748b" fontSize={11} />
-              <YAxis stroke="#64748b" fontSize={11} />
+            <AreaChart data={formattedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid vertical={false} horizontal={true} stroke="#e1e1de" />
+              <XAxis
+                dataKey="time"
+                stroke="#555555"
+                fontSize={11}
+                tickLine={false}
+                axisLine={{ stroke: "#111111" }}
+                fontFamily="var(--font-ibm-mono)"
+              />
+              <YAxis
+                stroke="#555555"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                fontFamily="var(--font-ibm-mono)"
+              />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#0f172a",
-                  borderColor: "#334155",
-                  borderRadius: "8px",
-                  color: "#f8fafc",
-                  fontSize: "12px",
+                  backgroundColor: "#ffffff",
+                  borderColor: "#111111",
+                  borderRadius: "0px",
+                  color: "#111111",
+                  fontSize: "11px",
+                  fontFamily: "var(--font-ibm-mono)",
+                  boxShadow: "none",
+                  padding: "8px 12px",
+                }}
+                itemStyle={{
+                  fontFamily: "var(--font-ibm-mono)",
+                  fontSize: "11px",
+                  padding: "2px 0",
+                }}
+                labelStyle={{
+                  fontFamily: "var(--font-ibm-mono)",
+                  fontWeight: 600,
+                  marginBottom: "4px",
+                  borderBottom: "1px solid #d6d6d2",
+                  paddingBottom: "2px",
                 }}
                 labelFormatter={(label, payload) => {
                   if (payload && payload.length > 0 && payload[0].payload?.timestamp) {
@@ -127,9 +142,7 @@ export function TrafficThreatsChart({
                           hour12: false,
                         });
                       }
-                    } catch {
-                      // Fallback to formatted tick
-                    }
+                    } catch {}
                   }
                   return label;
                 }}
@@ -138,19 +151,21 @@ export function TrafficThreatsChart({
                 type="monotone"
                 dataKey="total"
                 name="Total Requests"
-                stroke="#38bdf8"
+                stroke={TRAFFIC_COLOR}
                 strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#totalGrad)"
+                fill={TRAFFIC_COLOR}
+                fillOpacity={0.16}
+                isAnimationActive={false}
               />
               <Area
                 type="monotone"
                 dataKey="threats"
-                name="Threats (Blocked/Flagged)"
-                stroke="#f43f5e"
+                name="Threats"
+                stroke={THREAT_COLOR}
                 strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#threatGrad)"
+                fill={THREAT_COLOR}
+                fillOpacity={0.16}
+                isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>
