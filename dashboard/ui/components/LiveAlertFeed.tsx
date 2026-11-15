@@ -1,20 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Radio,
-  AlertTriangle,
-  ShieldCheck,
-  ShieldAlert,
-  Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  Zap,
-  Flame,
-  Bug,
-} from "lucide-react";
 import { API_BASE, EventItem } from "@/lib/api";
+import { getAttackLabel } from "@/lib/chart-colors";
 
 interface LiveAlertFeedProps {
   initialEvents: EventItem[];
@@ -87,7 +75,6 @@ export function LiveAlertFeed({
           setConnected(false);
           setReconnecting(true);
           if (eventSource) eventSource.close();
-          // Attempt retry in 5s
           reconnectTimer = setTimeout(connectSSE, 5000);
         };
       } catch (e) {
@@ -133,297 +120,253 @@ export function LiveAlertFeed({
   const pagedEvents = filtered.slice((activePage - 1) * pageSize, activePage * pageSize);
 
   return (
-    <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-5 shadow-lg flex flex-col justify-between">
-      <div>
-        {/* Header with Title and Connection Pill */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800/80 gap-3">
-          <div className="flex items-center gap-2.5">
-            <h3 className="text-sm font-semibold text-slate-200">
-              Live Alert & Audit Feed
-            </h3>
-            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-[11px]">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  connected
-                    ? "bg-emerald-500 animate-pulse"
-                    : reconnecting
-                    ? "bg-amber-500 animate-ping"
-                    : "bg-slate-600"
-                }`}
-              />
-              <span
-                className={
-                  connected
-                    ? "text-emerald-400 font-medium"
-                    : reconnecting
-                    ? "text-amber-400 font-medium"
-                    : "text-slate-400 font-medium"
-                }
-              >
-                {connected ? "LIVE SSE" : reconnecting ? "RECONNECTING" : "OFFLINE"}
+    <div className="bg-panel border border-ink">
+      {/* Header Strip with Title and Stream Status */}
+      <div className="px-4 py-2.5 border-b border-ink flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.06em]">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-ink">LIVE EVENTS</span>
+          <span className="text-muted">({filtered.length} EVENTS)</span>
+          <div className="flex items-center gap-1.5 ml-2">
+            {connected ? (
+              <span className="inline-flex items-center gap-1.5 text-ink font-semibold">
+                <span className="w-2 h-2 bg-ink inline-block" /> LIVE
               </span>
-            </div>
-            <span className="text-[11px] text-slate-500 font-mono hidden sm:inline">
-              ({filtered.length} matching)
-            </span>
-          </div>
-
-          {/* Quick Search */}
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Search IP, path, query..."
-              value={filterQuery}
-              onChange={(e) => {
-                setFilterQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-8 pr-3 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 font-mono"
-            />
+            ) : reconnecting ? (
+              <span className="inline-flex items-center gap-1.5 text-muted">
+                <span className="w-2 h-2 border border-ink inline-block" /> RECONNECTING
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-muted">
+                PAUSED
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Multi-facet Filter Bar */}
-        <div className="flex items-center gap-2 py-3 border-b border-slate-800/60 flex-wrap text-xs">
-          <span className="text-slate-500 text-[11px] flex items-center gap-1 mr-1">
-            <Filter className="w-3 h-3" /> Filters:
-          </span>
-
-          {/* Verdict Filter */}
-          <select
-            value={filterVerdict}
+        {/* Quick Search */}
+        <div className="w-full sm:w-64">
+          <input
+            type="text"
+            placeholder="Search IP, path, query..."
+            value={filterQuery}
             onChange={(e) => {
-              setFilterVerdict(e.target.value);
+              setFilterQuery(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-300 text-xs focus:outline-none focus:border-sky-500"
-          >
-            <option value="all">All Verdicts</option>
-            <option value="block">Block Only</option>
-            <option value="flag">Flag Only</option>
-            <option value="allow">Allow Only</option>
-          </select>
-
-          {/* Attack Type Filter */}
-          <select
-            value={filterAttackType}
-            onChange={(e) => {
-              setFilterAttackType(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-300 text-xs focus:outline-none focus:border-sky-500"
-          >
-            <option value="all">All Threat Types</option>
-            <option value="sqli">SQLi</option>
-            <option value="xss">XSS</option>
-            <option value="path_traversal">Path Traversal</option>
-            <option value="rce">Command Injection</option>
-            <option value="scanner">Scanner Probe</option>
-            <option value="benign">Benign Only</option>
-          </select>
-
-          {/* Anomaly Flag Filter */}
-          <select
-            value={filterAnomaly}
-            onChange={(e) => {
-              setFilterAnomaly(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-300 text-xs focus:outline-none focus:border-sky-500"
-          >
-            <option value="all">All Anomaly Flags</option>
-            <option value="rate_burst">Rate Burst Flag</option>
-            <option value="block_burst">Block Burst Flag</option>
-            <option value="scanner_like">Scanner Probing Flag</option>
-          </select>
-
-          {/* Feedback Filter */}
-          <select
-            value={filterFeedback}
-            onChange={(e) => {
-              setFilterFeedback(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-300 text-xs focus:outline-none focus:border-sky-500"
-          >
-            <option value="all">All Feedback</option>
-            <option value="unlabeled">Unlabeled Only</option>
-            <option value="fp">False Positive (FP)</option>
-            <option value="tp">True Threat (TP)</option>
-          </select>
-
-          {(filterVerdict !== "all" ||
-            filterAttackType !== "all" ||
-            filterAnomaly !== "all" ||
-            filterFeedback !== "all" ||
-            filterQuery) && (
-            <button
-              onClick={() => {
-                setFilterVerdict("all");
-                setFilterAttackType("all");
-                setFilterAnomaly("all");
-                setFilterFeedback("all");
-                setFilterQuery("");
-                setCurrentPage(1);
-              }}
-              className="text-[11px] text-sky-400 hover:underline ml-auto"
-            >
-              Reset Filters
-            </button>
-          )}
-        </div>
-
-        {/* Table of Events */}
-        <div className="mt-2 overflow-x-auto min-h-[360px]">
-          <table className="w-full text-left text-xs font-mono">
-            <thead className="sticky top-0 bg-slate-900 border-b border-slate-800 text-slate-400 font-sans">
-              <tr>
-                <th className="py-2.5 px-3">Time</th>
-                <th className="py-2.5 px-3">Verdict</th>
-                <th className="py-2.5 px-3">Threat & Anomaly</th>
-                <th className="py-2.5 px-3">Method & Path</th>
-                <th className="py-2.5 px-3">Client IP</th>
-                <th className="py-2.5 px-3 text-right">ML Score</th>
-                <th className="py-2.5 px-3 text-right">Feedback</th>
-                <th className="py-2.5 px-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {pagedEvents.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-12 text-slate-500 font-sans">
-                    No requests match your selected filters.
-                  </td>
-                </tr>
-              ) : (
-                pagedEvents.map((ev) => {
-                  let badgeBg = "bg-slate-800/60 text-slate-300 border-slate-700";
-                  if (ev.verdict === "block") {
-                    badgeBg = "bg-rose-500/10 text-rose-400 border-rose-500/30";
-                  } else if (ev.verdict === "flag") {
-                    badgeBg = "bg-amber-500/10 text-amber-400 border-amber-500/30";
-                  } else if (ev.verdict === "allow") {
-                    badgeBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-                  }
-
-                  return (
-                    <tr
-                      key={ev.id}
-                      className="hover:bg-slate-800/40 cursor-pointer transition-colors"
-                      onClick={() => onSelectEvent(ev)}
-                    >
-                      <td className="py-2 px-3 text-slate-400 text-[11px] whitespace-nowrap" title={ev.ts}>
-                        {formatLocalTime(ev.ts)}
-                      </td>
-                      <td className="py-2 px-3 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border ${badgeBg}`}
-                        >
-                          {ev.verdict}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-slate-300 capitalize text-xs">
-                            {ev.attack_type}
-                          </span>
-                          {ev.anomaly_flag === "rate_burst" && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                              <Zap className="w-2.5 h-2.5" /> burst
-                            </span>
-                          )}
-                          {ev.anomaly_flag === "block_burst" && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                              <ShieldAlert className="w-2.5 h-2.5" /> block_burst
-                            </span>
-                          )}
-                          {ev.anomaly_flag === "scanner_like" && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
-                              <Bug className="w-2.5 h-2.5" /> scanner
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-2 px-3 text-slate-200 truncate max-w-[260px]">
-                        <span className="font-semibold text-sky-400 mr-2">
-                          {ev.method}
-                        </span>
-                        {/* Strictly rendered as plain text string to prevent XSS */}
-                        <span>{ev.path}</span>
-                      </td>
-                      <td className="py-2 px-3 text-slate-400 whitespace-nowrap">
-                        {ev.client_ip}
-                      </td>
-                      <td className="py-2 px-3 text-right text-slate-300 whitespace-nowrap">
-                        {ev.ml_score.toFixed(3)}
-                      </td>
-                      <td className="py-2 px-3 text-right whitespace-nowrap">
-                        {ev.feedback ? (
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                              ev.feedback === "fp"
-                                ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                                : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                            }`}
-                          >
-                            {ev.feedback.toUpperCase()}
-                          </span>
-                        ) : (
-                          <span className="text-slate-600 text-[10px]">—</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-3 text-right whitespace-nowrap">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectEvent(ev);
-                          }}
-                          className="text-xs text-sky-400 hover:text-sky-300 hover:underline"
-                        >
-                          Inspect
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+            className="w-full bg-panel text-ink border border-ink px-2.5 py-1 text-[12px] font-mono focus:outline-none placeholder:text-muted"
+          />
         </div>
       </div>
 
+      {/* Filter Bar */}
+      <div className="px-4 py-2 border-b border-hair flex items-center gap-2 flex-wrap text-[12px] font-mono bg-panel">
+        <span className="text-muted text-[11px] uppercase tracking-[0.06em] mr-1">
+          FILTERS:
+        </span>
+
+        {/* Verdict Filter */}
+        <select
+          value={filterVerdict}
+          onChange={(e) => {
+            setFilterVerdict(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="bg-panel text-ink border border-ink px-2 py-1 text-[12px] font-mono focus:outline-none"
+        >
+          <option value="all">ALL VERDICTS</option>
+          <option value="block">BLOCK ONLY</option>
+          <option value="flag">FLAG ONLY</option>
+          <option value="allow">ALLOW ONLY</option>
+        </select>
+
+        {/* Attack Type Filter */}
+        <select
+          value={filterAttackType}
+          onChange={(e) => {
+            setFilterAttackType(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="bg-panel text-ink border border-ink px-2 py-1 text-[12px] font-mono focus:outline-none"
+        >
+          <option value="all">ALL THREAT TYPES</option>
+          <option value="sqli">SQLi</option>
+          <option value="xss">XSS</option>
+          <option value="path_traversal">PATH TRAVERSAL</option>
+          <option value="rce">COMMAND INJECTION</option>
+          <option value="scanner">SCANNER PROBE</option>
+          <option value="benign">BENIGN ONLY</option>
+        </select>
+
+        {/* Anomaly Flag Filter */}
+        <select
+          value={filterAnomaly}
+          onChange={(e) => {
+            setFilterAnomaly(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="bg-panel text-ink border border-ink px-2 py-1 text-[12px] font-mono focus:outline-none"
+        >
+          <option value="all">ALL ANOMALIES</option>
+          <option value="rate_burst">RATE BURST</option>
+          <option value="block_burst">BLOCK BURST</option>
+          <option value="scanner_like">SCANNER PROBE</option>
+        </select>
+
+        {/* Feedback Filter */}
+        <select
+          value={filterFeedback}
+          onChange={(e) => {
+            setFilterFeedback(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="bg-panel text-ink border border-ink px-2 py-1 text-[12px] font-mono focus:outline-none"
+        >
+          <option value="all">ALL FEEDBACK</option>
+          <option value="unlabeled">UNLABELED</option>
+          <option value="fp">FALSE POSITIVE (FP)</option>
+          <option value="tp">CONFIRMED THREAT (TP)</option>
+        </select>
+
+        {(filterVerdict !== "all" ||
+          filterAttackType !== "all" ||
+          filterAnomaly !== "all" ||
+          filterFeedback !== "all" ||
+          filterQuery) && (
+          <button
+            onClick={() => {
+              setFilterVerdict("all");
+              setFilterAttackType("all");
+              setFilterAnomaly("all");
+              setFilterFeedback("all");
+              setFilterQuery("");
+              setCurrentPage(1);
+            }}
+            className="text-[11px] text-ink underline hover:text-muted ml-auto font-mono uppercase"
+          >
+            Reset Filters
+          </button>
+        )}
+      </div>
+
+      {/* Events Table */}
+      <div className="overflow-x-auto min-h-[360px]">
+        <table className="w-full text-left font-mono text-[12px] border-collapse">
+          <thead>
+            <tr className="bg-ink text-white text-[11px] uppercase tracking-[0.06em]">
+              <th className="px-3.5 py-2 font-medium">Time</th>
+              <th className="px-3.5 py-2 font-medium">Verdict</th>
+              <th className="px-3.5 py-2 font-medium">Threat</th>
+              <th className="px-3.5 py-2 font-medium">Request</th>
+              <th className="px-3.5 py-2 font-medium">Client IP</th>
+              <th className="px-3.5 py-2 font-medium text-right">Score</th>
+              <th className="px-3.5 py-2 font-medium text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-hair">
+            {pagedEvents.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-12 text-muted font-mono">
+                  NO REQUESTS MATCH YOUR SELECTED FILTERS.
+                </td>
+              </tr>
+            ) : (
+              pagedEvents.map((ev) => {
+                const verdictUpper = (ev.verdict || "").toUpperCase();
+                return (
+                  <tr
+                    key={ev.id}
+                    className="even:bg-panel odd:bg-zebra hover:bg-hover cursor-pointer transition-colors"
+                    onClick={() => onSelectEvent(ev)}
+                  >
+                    <td className="px-3.5 py-2 text-ink whitespace-nowrap" title={ev.ts}>
+                      {formatLocalTime(ev.ts)}
+                    </td>
+                    <td className="px-3.5 py-2 whitespace-nowrap">
+                      {verdictUpper === "BLOCK" ? (
+                        <span className="font-semibold text-ink">BLOCK</span>
+                      ) : verdictUpper === "FLAG" ? (
+                        <span className="font-semibold text-ink border border-ink px-1">FLAG</span>
+                      ) : (
+                        <span className="text-muted font-normal">ALLOW</span>
+                      )}
+                    </td>
+                    <td className="px-3.5 py-2 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-ink">
+                          {getAttackLabel(ev.attack_type)}
+                        </span>
+                        {ev.anomaly_flag && (
+                          <span className="font-mono text-[10px] text-muted border border-hair px-1 uppercase">
+                            {ev.anomaly_flag}
+                          </span>
+                        )}
+                        {ev.feedback && (
+                          <span className="font-mono text-[10px] text-ink border border-ink px-1 uppercase">
+                            {ev.feedback}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3.5 py-2 text-ink truncate max-w-[280px]">
+                      <span className="font-semibold mr-2">{ev.method}</span>
+                      <span>{ev.path}</span>
+                    </td>
+                    <td className="px-3.5 py-2 text-ink whitespace-nowrap">
+                      {ev.client_ip}
+                    </td>
+                    <td className="px-3.5 py-2 text-right text-ink whitespace-nowrap font-medium">
+                      {ev.ml_score.toFixed(3)}
+                    </td>
+                    <td className="px-3.5 py-2 text-right whitespace-nowrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectEvent(ev);
+                        }}
+                        className="text-ink underline hover:text-muted"
+                      >
+                        Inspect
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
       {/* Pagination Controls */}
-      <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+      <div className="px-4 py-2.5 border-t border-hair flex items-center justify-between text-[11px] font-mono text-muted bg-panel">
         <div>
-          Showing{" "}
-          <strong className="text-slate-200">
+          SHOWING{" "}
+          <strong className="text-ink">
             {filtered.length === 0 ? 0 : (activePage - 1) * pageSize + 1}
           </strong>{" "}
-          to{" "}
-          <strong className="text-slate-200">
+          TO{" "}
+          <strong className="text-ink">
             {Math.min(activePage * pageSize, filtered.length)}
           </strong>{" "}
-          of <strong className="text-slate-200">{filtered.length}</strong> events
+          OF <strong className="text-ink">{filtered.length}</strong> EVENTS
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={activePage <= 1}
-            className="p-1 rounded bg-slate-950 border border-slate-800 disabled:opacity-40 hover:text-white"
+            className="px-2 py-1 border border-ink text-ink disabled:text-muted disabled:border-hair hover:bg-hover transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            PREV
           </button>
-          <span className="font-mono text-[11px]">
-            Page {activePage} of {totalPages}
+          <span>
+            PAGE {activePage} OF {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={activePage >= totalPages}
-            className="p-1 rounded bg-slate-950 border border-slate-800 disabled:opacity-40 hover:text-white"
+            className="px-2 py-1 border border-ink text-ink disabled:text-muted disabled:border-hair hover:bg-hover transition-colors"
           >
-            <ChevronRight className="w-4 h-4" />
+            NEXT
           </button>
         </div>
       </div>
