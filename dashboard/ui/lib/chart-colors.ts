@@ -35,5 +35,6 @@ export function getAttackLabel(type: string): string {
   if (norm.includes("cmd") || norm.includes("command")) return ATTACK_COLORS.cmdi.label;
   if (norm.includes("scan") || norm.includes("burst")) return ATTACK_COLORS.scanner_like.label;
   if (norm.includes("anomaly") || norm.includes("ml")) return ATTACK_COLORS.ml_anomaly.label;
+  if (norm === "benign") return "Benign";
   return type || ATTACK_COLORS.other.label;
 }
